@@ -211,7 +211,7 @@ def objective(trial):
         plt.title('Training/Validation/Testing F1 Score')
         plt.legend()
 
-        plt.savefig(f"{test_year}_results.png")
+        plt.savefig(f"output_figures/{test_year}_results.png")
         plt.show()
 
         return mean_val_loss
