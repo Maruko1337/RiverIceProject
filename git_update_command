@@ -1,0 +1,12 @@
+# Check the status of your repository
+git status
+
+# Add changes to the staging area
+git add filename  # for specific files
+git add .         # for all changed files
+
+# Commit the changes
+git commit -m "Your descriptive commit message"
+
+# Push changes to GitHub
+git push origin master
