@@ -18,6 +18,7 @@ import os
 import networkx as nx
 from utils import *
 from models import *
+from constants import *
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -25,10 +26,10 @@ def parse_arguments():
     parser.add_argument('--fastmode', action='store_true', default=False, help='Validate during training pass.')
     parser.add_argument('--seed', type=int, default=42, help='Random seed.')
     parser.add_argument('--epochs', type=int, default=30, help='Number of epochs to train.')
-    parser.add_argument('--lr', type=float, default=0.01, help='Initial learning rate.')
-    parser.add_argument('--weight_decay', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')
-    parser.add_argument('--hidden', type=int, default=2, help='Number of hidden units.')
-    parser.add_argument('--dropout', type=float, default=0.5, help='Dropout rate (1 - keep probability).')
+    parser.add_argument('--LR', type=float, default=0.01, help='Initial learning rate.')
+    parser.add_argument('--WD', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')
+    parser.add_argument('--HIDDEN_SIZE', type=int, default=2, help='Number of HIDDEN_SIZE units.')
+    parser.add_argument('--DROPOUT', type=float, default=0.5, help='Dropout rate (1 - keep probability).')
     return parser.parse_args()
 
 def setup_cuda(args):
@@ -43,43 +44,16 @@ def objective(trial):
     args = parse_arguments()
     args = setup_cuda(args)
 
-    model_name = "GCN"
-    area_of_interest = "lake"
-    test_years = ["2017"]
-    to_mask = False
-
-    for test_year in test_years:
-        hidden = 4
+    for test_year in TEST_YEARS:
         print("Running experiment for year:", test_year)
 
-        # Hyperparameters to tune
-        lr = 0.8
-        weight_decay = 5e-3
-        dropout = 0.2
-        n_features = 2
-        n_class = 2
-        n_layers = 4
-        nNodes = 2131 if area_of_interest == "lake" else 1181
+        nNodes = 2131 if AOI == "lake" else 1181
 
         # Model and optimizer
-        model = GCN(nfeat=n_features, nhid=hidden, nclass=n_class, dropout=dropout, nNodes=nNodes)
-        optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+        model = GCN(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT, nNodes=nNodes)
+        optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WD)
         
-        if args.cuda:
-            model.cuda()
-
-        def train(epoch, adj, features, labels):
-            model.train()
-            optimizer.zero_grad()
-            output = model(features, adj)
-            weights = calculate_weights(labels)
-            loss_train = F.cross_entropy(output, labels, weight=weights)
-            acc_train = accuracy(output, labels)
-            f1_train = f1_score(output, labels)
-            loss_train.backward()
-            optimizer.step()
-            print(f'Epoch: {epoch+1}, loss_train: {loss_train.item():.4f}, acc_train: {acc_train:.4f}, f1_train: {f1_train:.4f}')
-            return loss_train.item(), acc_train, f1_train
+        if args.cuda: model.cuda()
 
         def train_model(path, train_files):
             train_loss_list, train_acc_list, train_f1_list = [], [], []
@@ -87,9 +61,18 @@ def objective(trial):
                 if not file_name.startswith(test_year):
                     file_path = os.path.join(path, file_name)
                     print("Training on:", file_path)
-                    adj, features, labels, _ = load_data(file_path)
+                    if TO_MASK:
+                        adj, features, labels, mask = load_data(file_path, mask = True)
+                        mask_rate = sum(mask) / len(mask) * 100
+                        print(f"label rate = {mask_rate}")
+                        mask = torch.tensor(mask, dtype=torch.bool)
+                        print(f"label length = {len(labels)}, mask len = {len(mask)}")
+                        print(f"label mask = 1: {labels[mask]}")
+                    else:
+                        adj, features, labels = load_data(file_path, mask=False)
                     if args.cuda:
                         features, adj, labels = features.cuda(), adj.cuda(), labels.cuda()
+                    optimizer.zero_grad()
                     output = model(features, adj)
                     weights = calculate_weights(labels)
                     train_loss = F.cross_entropy(output, labels, weight=weights)
@@ -98,7 +81,7 @@ def objective(trial):
                     train_loss_list.append(train_loss.item())
                     train_acc_list.append(train_acc)
                     train_f1_list.append(train_f1)
-                    optimizer.zero_grad()
+                    
                     train_loss.backward()
                     optimizer.step()
             return np.mean(train_loss_list), np.mean(train_acc_list), np.mean(train_f1_list)
@@ -159,9 +142,13 @@ def objective(trial):
                     acc_list.append(acc_test)
                     f1_list.append(f1_test)
                     if last:
-                        visualize(file_name, adj, features, output, labels, area_of_interest, model_name)
+                        visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME)
             return np.mean(loss_list), np.mean(acc_list), np.mean(f1_list)
-
+        if AOI == "lake":
+            path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/new_label/graphs"
+        else:
+            path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/7relabel_graphs"
+        
         # Training process
         loss_train_list, acc_train_list, f1_train_list = [], [], []
         loss_val_list, acc_val_list, f1_val_list = [], [], []

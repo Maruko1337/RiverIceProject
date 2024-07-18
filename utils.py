@@ -552,7 +552,7 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
     
     # Initialize lists to store features
     feature_list = []
-    if mask: mask = []
+    if mask: masks = []
     node_count = 0
     # Iterate through nodes and extract features
     for node in G.nodes():
@@ -560,7 +560,7 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
         attributes = G.nodes[node]
         # print(attributes)
         # Extract feature values and append them to the list
-        if mask: mask.append(attributes['mask'])
+        if mask: masks.append(attributes['mask'])
         features = [
             # attributes['pos'][0],  # X-coordinate
             # attributes['pos'][1],  # Y-coordinate
@@ -598,7 +598,7 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
     norm_features = norm_features.astype(np.float32)
     # print(norm_features.dtype)
     # norm_features = normalize(features)
-    norm_adj = normalize(adj + sp.eye(adj.shape[0]))
+    norm_adj = normalize_adjacency_matrix(adj + sp.eye(adj.shape[0]))
 
     
     
@@ -634,7 +634,7 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
         ice_percentage_ori = (ice_count_ori / total_nodes_ori) * 100
 
         # Print the percentage of ice nodes
-        # print("Percentage of ice nodes: {:.2f}%".format(ice_percentage_ori))
+        print("Percentage of ice nodes: {:.2f}%".format(ice_percentage_ori))
         
         # Split indices for training, validation, and testing
         n_label = len(labels)
@@ -656,7 +656,9 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
     # print(f"adj: {norm_adj.shape}")
     # print(f"features: {norm_features.shape}")
     # print(f"labels: {labels.shape}")
-    if mask:return norm_adj, norm_features, labels, mask
+    if mask and temp: return norm_adj, norm_features, labels, masks, temperature
+    
+    if mask: return norm_adj, norm_features, labels, masks
     
     if temp:
         return norm_adj, norm_features, labels, temperature
@@ -670,6 +672,26 @@ def save_model(model, optimizer, path):
         'optimizer_state_dict': optimizer.state_dict(),
     }, path)
 
+def normalize_adjacency_matrix(adj):
+    """
+    Normalizes the adjacency matrix using the symmetric normalization method.
+
+    Parameters:
+    adj (np.array or sp.spmatrix): The adjacency matrix of the graph.
+
+    Returns:
+    np.array: The normalized adjacency matrix.
+    """
+    adj = sp.coo_matrix(adj)
+    rowsum = np.array(adj.sum(1))
+
+    # Compute D^-0.5
+    d_inv_sqrt = np.power(rowsum, -0.5).flatten()
+    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+    d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
+
+    # Normalized adjacency matrix: D^-0.5 * A * D^-0.5
+    return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
 
 def normalize(mx):
     """Row-normalize sparse matrix"""
