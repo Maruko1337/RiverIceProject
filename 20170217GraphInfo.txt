@@ -1,0 +1,30 @@
+Loading cora dataset...
+Cora
+adj: torch.Size([2708, 2708])
+features: torch.Size([2708, 1433])
+labels: torch.Size([2708])
+date: 20200209
+Loading beauhornoise dataset...
+start smote
+date: 20200121
+Loading beauhornoise dataset...
+start smote
+date: 20200221
+Loading beauhornoise dataset...
+start smote
+date: 20200304
+Loading beauhornoise dataset...
+start smote
+date: 20200128
+Loading beauhornoise dataset...
+start smote
+date: 20200214
+Loading beauhornoise dataset...
+start smote
+True
+True
+True
+True
+True
+True
+Printed output will be saved to printed_output.txt

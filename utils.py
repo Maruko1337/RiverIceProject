@@ -542,7 +542,8 @@ def resample_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/da
     
     return adj_resampled, features_resampled, labels_resampled, idx_train, idx_val, idx_test
 
-def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4Graphs/20190109", k = 3, mask = True, resample = False, draw = False, dataset="beauhornoise", temp = True):
+
+def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4Graphs/20190109", k = 3, mask = True, resample = False, draw = False, dataset="beauhornoise", temp = False):
     """Load citation network dataset"""
     # print('Loading {} dataset...'.format(dataset))
     # print(f"path = {path}")
@@ -583,8 +584,8 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
             # attributes['dissimilarity'],
             # attributes['sum_of_squares_variance']
         ]
+        feature_list.append(features)
         if temp:
-            feature_list.append(features)
             temperature = attributes['temperature']
         
     
@@ -598,7 +599,7 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
     norm_features = norm_features.astype(np.float32)
     # print(norm_features.dtype)
     # norm_features = normalize(features)
-    norm_adj = normalize_adjacency_matrix(adj + sp.eye(adj.shape[0]))
+    norm_adj = normalize(adj + sp.eye(adj.shape[0]))
 
     
     
@@ -634,7 +635,7 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
         ice_percentage_ori = (ice_count_ori / total_nodes_ori) * 100
 
         # Print the percentage of ice nodes
-        print("Percentage of ice nodes: {:.2f}%".format(ice_percentage_ori))
+        # print("Percentage of ice nodes: {:.2f}%".format(ice_percentage_ori))
         
         # Split indices for training, validation, and testing
         n_label = len(labels)
@@ -656,9 +657,7 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
     # print(f"adj: {norm_adj.shape}")
     # print(f"features: {norm_features.shape}")
     # print(f"labels: {labels.shape}")
-    if mask and temp: return norm_adj, norm_features, labels, masks, temperature
-    
-    if mask: return norm_adj, norm_features, labels, masks
+    if mask:return norm_adj, norm_features, labels, masks
     
     if temp:
         return norm_adj, norm_features, labels, temperature
@@ -677,11 +676,14 @@ def normalize_adjacency_matrix(adj):
     Normalizes the adjacency matrix using the symmetric normalization method.
 
     Parameters:
-    adj (np.array or sp.spmatrix): The adjacency matrix of the graph.
+    adj (scipy.sparse.csr.csr_matrix): The adjacency matrix of the graph.
 
     Returns:
-    np.array: The normalized adjacency matrix.
+    torch.Tensor: The normalized adjacency matrix as a dense tensor.
     """
+    adj = adj + sp.eye(adj.shape[0])  # Add self-loop (identity matrix)
+
+    # Convert adjacency matrix to COO format for easier manipulation
     adj = sp.coo_matrix(adj)
     rowsum = np.array(adj.sum(1))
 
@@ -691,7 +693,13 @@ def normalize_adjacency_matrix(adj):
     d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
 
     # Normalized adjacency matrix: D^-0.5 * A * D^-0.5
-    return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
+    normalized_adj = adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
+
+    # Convert normalized_adj to a dense torch tensor
+    normalized_adj = torch.tensor(normalized_adj.toarray(), dtype=torch.float32)
+
+    return normalized_adj
+
 
 def normalize(mx):
     """Row-normalize sparse matrix"""

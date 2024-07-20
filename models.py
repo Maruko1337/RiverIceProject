@@ -35,26 +35,26 @@ def MLP(channels, batch_norm=True):
 
     return mlp_model
 
-def normalize_adjacency_matrix(adj):
-    """
-    Normalizes the adjacency matrix using the symmetric normalization method.
+# def normalize_adjacency_matrix(adj):
+#     """
+#     Normalizes the adjacency matrix using the symmetric normalization method.
 
-    Parameters:
-    adj (np.array or sp.spmatrix): The adjacency matrix of the graph.
+#     Parameters:
+#     adj (np.array or sp.spmatrix): The adjacency matrix of the graph.
 
-    Returns:
-    np.array: The normalized adjacency matrix.
-    """
-    adj = sp.coo_matrix(adj)
-    rowsum = np.array(adj.sum(1))
+#     Returns:
+#     np.array: The normalized adjacency matrix.
+#     """
+#     adj = sp.coo_matrix(adj)
+#     rowsum = np.array(adj.sum(1))
 
-    # Compute D^-0.5
-    d_inv_sqrt = np.power(rowsum, -0.5).flatten()
-    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
-    d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
+#     # Compute D^-0.5
+#     d_inv_sqrt = np.power(rowsum, -0.5).flatten()
+#     d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+#     d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
 
-    # Normalized adjacency matrix: D^-0.5 * A * D^-0.5
-    return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
+#     # Normalized adjacency matrix: D^-0.5 * A * D^-0.5
+#     return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
 
 
 
@@ -102,7 +102,7 @@ class GCN(nn.Module):
        
         print(x.size())
         
-        adj = normalize_adjacency_matrix(adj)
+        
         x = F.relu(self.gc1(x, adj))
         # print(x.size())
         x = F.dropout(x, self.dropout, training=self.training)

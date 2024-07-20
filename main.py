@@ -64,16 +64,23 @@ def objective(trial):
                     if TO_MASK:
                         adj, features, labels, mask = load_data(file_path, mask = True)
                         mask_rate = sum(mask) / len(mask) * 100
-                        print(f"label rate = {mask_rate}")
+                        # print(f"label rate = {mask_rate}")
                         mask = torch.tensor(mask, dtype=torch.bool)
-                        print(f"label length = {len(labels)}, mask len = {len(mask)}")
-                        print(f"label mask = 1: {labels[mask]}")
+                        # print(f"label length = {len(labels)}, mask len = {len(mask)}")
+                        # print(f"label mask = 1: {labels[mask]}")
                     else:
                         adj, features, labels = load_data(file_path, mask=False)
                     if args.cuda:
                         features, adj, labels = features.cuda(), adj.cuda(), labels.cuda()
                     optimizer.zero_grad()
+
+                    # print(f"features is {features}")
+
                     output = model(features, adj)
+                    if TO_MASK:
+                        output = output[mask]
+                        labels = labels[mask]
+                    
                     weights = calculate_weights(labels)
                     train_loss = F.cross_entropy(output, labels, weight=weights)
                     train_acc = accuracy(output, labels)
@@ -111,10 +118,24 @@ def objective(trial):
             for file_name in val_files:
                 if not file_name.startswith(test_year):
                     file_path = os.path.join(path, file_name)
-                    adj, features, labels, _ = load_data(file_path)
+                    
+                    if TO_MASK:
+                        adj, features, labels, mask = load_data(file_path, mask = True)
+                        mask_rate = sum(mask) / len(mask) * 100
+                        print(f"label rate = {mask_rate}")
+                        mask = torch.tensor(mask, dtype=torch.bool)
+                        print(f"label length = {len(labels)}, mask len = {len(mask)}")
+                        print(f"label mask = 1: {labels[mask]}")
+                    else:
+                        adj, features, labels = load_data(file_path, mask=False)
                     if args.cuda:
                         features, adj, labels = features.cuda(), adj.cuda(), labels.cuda()
+                    # optimizer.zero_grad()
                     output = model(features, adj)
+                    if TO_MASK:
+                        output = output[mask]
+                        labels = labels[mask]
+                        
                     weights = calculate_weights(labels)
                     val_loss = F.cross_entropy(output, labels, weight=weights)
                     val_acc = accuracy(output, labels)
@@ -130,10 +151,24 @@ def objective(trial):
             for file_name in os.listdir(path):
                 if file_name.startswith(test_year):
                     file_path = os.path.join(path, file_name)
-                    adj, features, labels, _ = load_data(file_path)
+                    
+                    if TO_MASK:
+                        adj, features, labels, mask = load_data(file_path, mask = True)
+                        mask_rate = sum(mask) / len(mask) * 100
+                        print(f"label rate = {mask_rate}")
+                        mask = torch.tensor(mask, dtype=torch.bool)
+                        print(f"label length = {len(labels)}, mask len = {len(mask)}")
+                        print(f"label mask = 1: {labels[mask]}")
+                    else:
+                        adj, features, labels = load_data(file_path, mask=False)
                     if args.cuda:
                         features, adj, labels = features.cuda(), adj.cuda(), labels.cuda()
+                    # optimizer.zero_grad()
                     output = model(features, adj)
+                    if TO_MASK:
+                        output = output[mask]
+                        labels = labels[mask]
+                        
                     weights = calculate_weights(labels)
                     loss_test = F.cross_entropy(output, labels, weight=weights)
                     acc_test = accuracy(output, labels)
@@ -143,6 +178,15 @@ def objective(trial):
                     f1_list.append(f1_test)
                     if last:
                         visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME)
+            
+
+            
+            # Assuming acc_list, loss_list, f1_list are lists of PyTorch tensors
+            # acc_list_cpu = [acc_item.cpu().item() for acc_item in acc_list]
+            # loss_list_cpu = [loss_item.cpu().item() for loss_item in loss_list]
+            # f1_list_cpu = [f1_item.cpu().item() for f1_item in f1_list]
+            loss_list = [loss.detach().cpu().numpy() for loss in loss_list]
+            # return np.mean(loss_list_cpu), np.mean(acc_list_cpu), np.mean(f1_list_cpu)
             return np.mean(loss_list), np.mean(acc_list), np.mean(f1_list)
         if AOI == "lake":
             path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/new_label/graphs"
@@ -162,7 +206,10 @@ def objective(trial):
             loss_val_list.append(mean_val_loss)
             acc_val_list.append(mean_val_acc)
             f1_val_list.append(mean_val_f1)
-            loss_test, acc_test, f1_test = test(path)
+            if epoch == args.epochs - 1:
+                loss_test, acc_test, f1_test = test(path, last = True)
+            else:
+                loss_test, acc_test, f1_test = test(path)
             loss_test_list.append(loss_test)
             acc_test_list.append(acc_test)
             f1_test_list.append(f1_test)

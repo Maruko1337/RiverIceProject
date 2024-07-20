@@ -1,7 +1,7 @@
 MODEL_NAME = "GCN"
 AOI = "lake" # area of interest
 TEST_YEARS = ["2017"]
-TO_MASK = False
+TO_MASK = True
 HIDDEN_SIZE = 4
 
 
