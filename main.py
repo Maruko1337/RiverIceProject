@@ -25,7 +25,7 @@ def parse_arguments():
     parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
     parser.add_argument('--fastmode', action='store_true', default=False, help='Validate during training pass.')
     parser.add_argument('--seed', type=int, default=42, help='Random seed.')
-    parser.add_argument('--epochs', type=int, default=30, help='Number of epochs to train.')
+    parser.add_argument('--epochs', type=int, default=10, help='Number of epochs to train.')
     parser.add_argument('--LR', type=float, default=0.01, help='Initial learning rate.')
     parser.add_argument('--WD', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')
     parser.add_argument('--HIDDEN_SIZE', type=int, default=2, help='Number of HIDDEN_SIZE units.')
@@ -166,18 +166,19 @@ def objective(trial):
                     # optimizer.zero_grad()
                     output = model(features, adj)
                     if TO_MASK:
-                        output = output[mask]
-                        labels = labels[mask]
+                        masked_output = output[mask]
+                        masked_labels = labels[mask]
                         
-                    weights = calculate_weights(labels)
-                    loss_test = F.cross_entropy(output, labels, weight=weights)
-                    acc_test = accuracy(output, labels)
-                    f1_test = f1_score(output, labels)
+                        weights = calculate_weights(masked_labels)
+                        loss_test = F.cross_entropy(masked_output, masked_labels, weight=weights)
+                        acc_test = accuracy(masked_output, masked_labels)
+                        f1_test = f1_score(masked_output, masked_labels)
                     loss_list.append(loss_test)
                     acc_list.append(acc_test)
                     f1_list.append(f1_test)
                     if last:
                         visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME)
+                        
             
 
             
