@@ -5,7 +5,7 @@ TO_MASK = True
 HIDDEN_SIZE = 4
 
 
-LR = 0.8 # learning rate
+LR = 0.1 # learning rate
 WD = 5e-3 # weight decay
 DROPOUT = 0.2
 N_FEATURES = 2

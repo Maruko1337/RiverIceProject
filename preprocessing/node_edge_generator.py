@@ -716,7 +716,9 @@ with open(output_file_path, "w") as f:
     # Iterate through all files in the folder
     for file_name in os.listdir(input_path):
         f.flush()
-        if file_name.endswith("jpg"):
+        # if file_name.endswith("jpg"):
+        if file_name.startswith("20200309"):
+
             date = file_name.split("_", 1)[-1]
             base_name, extension = os.path.splitext(file_name)
             date = re.search(r'\d{8}', base_name)

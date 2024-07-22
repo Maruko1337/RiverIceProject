@@ -53,10 +53,14 @@ def objective(trial):
         model = GCN(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT, nNodes=nNodes)
         optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WD)
         
-        if args.cuda: model.cuda()
+        if args.cuda: 
+            model.cuda()
+            print(f"cuda is avaiable")
 
         def train_model(path, train_files):
+            model.train()
             train_loss_list, train_acc_list, train_f1_list = [], [], []
+            need_break = False
             for file_name in train_files:
                 if not file_name.startswith(test_year):
                     file_path = os.path.join(path, file_name)
@@ -75,22 +79,56 @@ def objective(trial):
                     optimizer.zero_grad()
 
                     # print(f"features is {features}")
+                    
 
                     output = model(features, adj)
                     if TO_MASK:
-                        output = output[mask]
-                        labels = labels[mask]
-                    
-                    weights = calculate_weights(labels)
-                    train_loss = F.cross_entropy(output, labels, weight=weights)
-                    train_acc = accuracy(output, labels)
-                    train_f1 = f1_score(output, labels)
+                        masked_output = output[mask]
+                        masked_labels = labels[mask]
+                        # print(f"masked_output = {masked_output}, masked_label = {masked_labels}")
+                        # print(f"output = {output}, label = {labels}")
+
+                        
+                        weights = calculate_weights(masked_labels)
+                        train_loss = F.cross_entropy(masked_output, masked_labels, weight=weights)
+                        print(f"loss is {train_loss}")
+                        # print(f"masked output is {masked_output}, masked labels is {masked_labels}, weights is {weights}, loss test is {loss_test}")
+                        train_acc = accuracy(masked_output, masked_labels)
+                        train_f1 = f1_score(masked_output, masked_labels)
+                    else:
+                        weights = calculate_weights(labels)
+                        train_loss = F.cross_entropy(output, labels, weight=weights)
+                        # print(f"masked output is {masked_output}, masked labels is {masked_labels}, weights is {weights}, loss test is {loss_test}")
+                        train_acc = accuracy(output, labels)
+                        train_f1 = f1_score(output, labels)
+
+                    if torch.isnan(train_loss):
+                        print(f"date {file_name} need break---------------------------")
+                        print(f"label = {masked_labels}, output = {masked_output}")
+                        print(f"label size = {masked_labels.size()}, output size = {masked_output.size()}")
+                        print(f"mask size = ")
+                        break
+                    else:
+                        print(f"date {file_name} ---------------------------")
+                        print(f"label = {masked_labels}, output = {masked_output}")
+                        print(f"label size = {masked_labels.size()}, output size = {masked_output.size()}")
+                        
                     train_loss_list.append(train_loss.item())
                     train_acc_list.append(train_acc)
                     train_f1_list.append(train_f1)
                     
-                    train_loss.backward()
-                    optimizer.step()
+                    # train_loss.backward()
+                    # optimizer.step()
+                    
+                    for i in output:
+                        for j in i:
+                            # print(f"nan j is {j}")
+                            if torch.isnan(j):
+                                need_break = True
+                    if need_break:
+                        print(f"date {file_name} need break---------------------------")
+                        break
+                print(f"train loss list is {train_loss_list}")
             return np.mean(train_loss_list), np.mean(train_acc_list), np.mean(train_f1_list)
 
         def cross_validation(path, n_splits=4):
@@ -102,6 +140,10 @@ def objective(trial):
                 train_files = [os.listdir(path)[i] for i in train_idx]
                 val_files = [os.listdir(path)[i] for i in val_idx]
                 train_loss, train_acc, train_f1 = train_model(path, train_files)
+                train_loss_tensor = torch.tensor(train_loss, requires_grad=True) 
+                train_loss_tensor.backward()
+                optimizer.step()
+                
                 val_loss, val_acc, val_f1 = validate(path, val_files)
                 train_loss_list.append(train_loss)
                 train_acc_list.append(train_acc)
@@ -122,10 +164,10 @@ def objective(trial):
                     if TO_MASK:
                         adj, features, labels, mask = load_data(file_path, mask = True)
                         mask_rate = sum(mask) / len(mask) * 100
-                        print(f"label rate = {mask_rate}")
+                        # print(f"label rate = {mask_rate}")
                         mask = torch.tensor(mask, dtype=torch.bool)
-                        print(f"label length = {len(labels)}, mask len = {len(mask)}")
-                        print(f"label mask = 1: {labels[mask]}")
+                        # print(f"label length = {len(labels)}, mask len = {len(mask)}")
+                        # print(f"label mask = 1: {labels[mask]}")
                     else:
                         adj, features, labels = load_data(file_path, mask=False)
                     if args.cuda:
@@ -155,24 +197,33 @@ def objective(trial):
                     if TO_MASK:
                         adj, features, labels, mask = load_data(file_path, mask = True)
                         mask_rate = sum(mask) / len(mask) * 100
-                        print(f"label rate = {mask_rate}")
+                        # print(f"label rate = {mask_rate}")
                         mask = torch.tensor(mask, dtype=torch.bool)
-                        print(f"label length = {len(labels)}, mask len = {len(mask)}")
-                        print(f"label mask = 1: {labels[mask]}")
+                        # print(f"label length = {len(labels)}, mask len = {len(mask)}")
+                        # print(f"label mask = 1: {labels[mask]}")
                     else:
                         adj, features, labels = load_data(file_path, mask=False)
                     if args.cuda:
                         features, adj, labels = features.cuda(), adj.cuda(), labels.cuda()
                     # optimizer.zero_grad()
                     output = model(features, adj)
+                    # print(f"output is {output}, features is {features}, adj is {adj}")
+                    
                     if TO_MASK:
                         masked_output = output[mask]
                         masked_labels = labels[mask]
                         
                         weights = calculate_weights(masked_labels)
                         loss_test = F.cross_entropy(masked_output, masked_labels, weight=weights)
+                        # print(f"masked output is {masked_output}, masked labels is {masked_labels}, weights is {weights}, loss test is {loss_test}")
                         acc_test = accuracy(masked_output, masked_labels)
                         f1_test = f1_score(masked_output, masked_labels)
+                    else:
+                        weights = calculate_weights(labels)
+                        loss_test = F.cross_entropy(output, labels, weight=weights)
+                        # print(f"masked output is {masked_output}, masked labels is {masked_labels}, weights is {weights}, loss test is {loss_test}")
+                        acc_test = accuracy(output, labels)
+                        f1_test = f1_score(output, labels)
                     loss_list.append(loss_test)
                     acc_list.append(acc_test)
                     f1_list.append(f1_test)
@@ -252,6 +303,29 @@ def objective(trial):
         return mean_val_loss
 
     return objective
+
+
+# Save the current stdout
+# original_stdout = sys.stdout
+
+# # Specify the file path where you want to save the printed output
+# output_file_path = "output_file.txt"
+
+# # Open the file in write mode
+# with open(output_file_path, "w") as f:
+#     # Redirect stdout to the file
+#     sys.stdout = f
+
+#     if __name__ == "__main__":
+#         study = optuna.create_study(direction='minimize')
+#         study.optimize(objective, n_trials=100)
+#         print(f"Best trial: {study.best_trial.value}")
+#         print(f"Best parameters: {study.best_trial.params}")
+    
+#     print("Printed output will be saved to output_file.txt")
+
+#     # Restore the original stdout
+#     sys.stdout = original_stdout
 
 if __name__ == "__main__":
     study = optuna.create_study(direction='minimize')

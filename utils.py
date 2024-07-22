@@ -591,6 +591,7 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
     
     # Convert NetworkX graph to adjacency matrix
     adj = nx.adjacency_matrix(G)
+    # print(f"original adj is {adj}")
 
     # Normalize features and adjacency matrix
     features = np.array(feature_list)  
@@ -600,8 +601,8 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
     # print(norm_features.dtype)
     # norm_features = normalize(features)
     norm_adj = normalize(adj + sp.eye(adj.shape[0]))
-
-    
+    # norm_adj = normalize_adjacency_matrix(adj + sp.eye(adj.shape[0]))
+    # print(f"after normalized adj is {norm_adj}")
     
 
     # Convert to PyTorch tensors
@@ -695,8 +696,8 @@ def normalize_adjacency_matrix(adj):
     # Normalized adjacency matrix: D^-0.5 * A * D^-0.5
     normalized_adj = adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
 
-    # Convert normalized_adj to a dense torch tensor
-    normalized_adj = torch.tensor(normalized_adj.toarray(), dtype=torch.float32)
+    # # Convert normalized_adj to a dense torch tensor
+    # normalized_adj = torch.tensor(normalized_adj.toarray(), dtype=torch.float32)
 
     return normalized_adj
 

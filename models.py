@@ -78,7 +78,7 @@ def tv_norm(X, eps=1e-3):
 class GCN(nn.Module):
     def __init__(self, nfeat, nhid, nclass, dropout, nNodes):
         super(GCN, self).__init__()
-
+        print(f"start initialize")
         self.gc1 = GraphConvolution(nfeat, nhid)
         self.gc2 = GraphConvolution(nhid, nhid)
         self.gc3 = GraphConvolution(nhid, nhid)
@@ -100,14 +100,15 @@ class GCN(nn.Module):
 
     def forward(self, x, adj):
        
-        print(x.size())
+        # print(f"step 1: feature is {x}, adj is {adj}")
         
         
         x = F.relu(self.gc1(x, adj))
-        # print(x.size())
+        # print(f"step 2: feature is {x}, adj is {adj}")
         x = F.dropout(x, self.dropout, training=self.training)
-        
+        # print(f"step 3: feature is {x}, adj is {adj}")
         x = self.gc4(x, adj)
+        # print(f"step 4: feature is {x}, adj is {adj}")
         
 
         return F.log_softmax(x, dim=1)

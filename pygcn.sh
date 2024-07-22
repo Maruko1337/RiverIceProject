@@ -5,7 +5,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1   # Request 1 GPU
-#SBATCH --time=20:00:00  # Request 1 hour of compute time
+#SBATCH --time=3:00:00  # Request 1 hour of compute time
 #SBATCH --mem=4GB  # Request 4GB of memory
 
 # salloc --time=2:0:0 --gres=gpu:1 --mem=4GB --ntasks=1 --account=def-ka3scott

@@ -3,6 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.nn.init as init
 
 from torch.nn.parameter import Parameter
 from torch.nn.modules.module import Module
@@ -22,8 +23,8 @@ class GraphConvolution(Module):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
+        print(f"in features is {in_features}, out features is {out_features}")
         self.weight = Parameter(torch.FloatTensor(in_features, out_features))
-        # print(f"self.weight intial {self.weight}")
         if bias:
             self.bias = Parameter(torch.FloatTensor(out_features))
         else:
