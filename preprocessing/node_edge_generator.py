@@ -14,6 +14,7 @@ from shapely.geometry import shape, Point, Polygon
 
 # import cupy as cp
 # from superpixels import slic  # CUDA-accelerated SLICO implementation
+# from normalize_intensity_relabel.py import *
 
 
 from osgeo import ogr
@@ -180,7 +181,7 @@ def get_inc_angle(date, x, y, raster):
     
     
 # Function to determine ice or water label for a given point (centroid) based on shapefile of ice
-def get_ice_water_label(date, raster):
+def get_ice_water_label(date, raster, intensity_values, std_values):
     # Function to extract coordinates from a Shapely geometry
     def extract_coordinates(geom):
         if geom.geom_type == 'Polygon':
@@ -451,9 +452,13 @@ def get_intensities(image, date, num_superpixels, segments):
     
     intensity_values = (intensity_values - np.min(intensity_values)) / (np.max(intensity_values) - np.min(intensity_values))
     
-    intensity_values = [0 if intensity > 0.9 else intensity for intensity in intensity_values]
+    # remove the outliers
+    # the value 0.85 is based on experiment
+    intensity_values = [0 if intensity > 0.35 else intensity for intensity in intensity_values]
+
     intensity_values = (intensity_values - np.min(intensity_values)) / (np.max(intensity_values) - np.min(intensity_values))
-    
+    intensity_values = [intensity/5 if intensity < 0.15 else intensity for intensity in intensity_values]
+
     std_values = (std_values - np.min(std_values)) / (np.max(std_values) - np.min(std_values))
     
     std_values = [0 if std > 0.9 else std for std in std_values]
@@ -512,7 +517,7 @@ def create_superpixel_graph(image, date, raster_path):
     total_node = 0
     start_time = time.time()
     
-    ice_list, water_list = get_ice_water_label(date, raster)
+    ice_list, water_list = get_ice_water_label(date, raster, intensity_values, std_values )
     hum, temp, wind = get_local_feature(date)
     
     valid_centers = []
@@ -551,19 +556,37 @@ def create_superpixel_graph(image, date, raster_path):
         inc_angle = get_inc_angle(date, center[0], center[1], raster)
         # print(f"time to generate incidence angle is {time.time() - start_inc_angle_time}")
         
+        intensity_threshold = 0.1
         # ice == 1, water == 0
-        if include_point(center, ice_list):
-            ice_water_label = 1
-            ice_count += 1
-            mask.append(1)
-            # print(f"point {point} is ice")
-        elif include_point(center, water_list):
-            ice_water_label = 0
-            water_count += 1
-            mask.append(1)
+        print(f"intensity < threshold:{intensity_threshold} = {intensity}-----------------------------------")
+        if intensity > intensity_threshold:
+            if include_point(center, ice_list):
+                ice_water_label = 1
+                ice_count += 1
+                mask.append(1)
+                # print(f"point {point} is ice")
+            elif include_point(center, water_list):
+                ice_water_label = 1
+                ice_count += 1
+                mask.append(0)
+            else:
+                ice_water_label = 1
+                mask.append(1)
         else:
-            ice_water_label = 0
-            mask.append(0)
+            if include_point(center, water_list):
+                ice_water_label = 0
+                water_count += 1
+                mask.append(1)
+                # print(f"point {point} is ice")
+            elif include_point(center, ice_list):
+                ice_water_label = 1
+                water_count += 1
+                mask.append(0)
+            else:
+                ice_water_label = 0
+                water_count += 1
+                mask.append(1)
+            
     
         # ice_water_label = get_ice_water_label(point, shapefile, raster, spatial_index)  # Determine ice or water label for the superpixel
         # if ice_water_label == "ice" : ice_count += 1
@@ -717,125 +740,132 @@ with open(output_file_path, "w") as f:
     for file_name in os.listdir(input_path):
         f.flush()
         # if file_name.endswith("jpg"):
-        if file_name.startswith("20200309"):
+        modify_list = ["20210328","20210208","20200309", "20200214"]
+        modify_list2 = ["20210316"]
+        for date in modify_list2:
+            if file_name.startswith(date):
 
-            date = file_name.split("_", 1)[-1]
-            base_name, extension = os.path.splitext(file_name)
-            date = re.search(r'\d{8}', base_name)
-            date = date.group(0)
-            # if not os.path.exists(os.path.join(graphs_folder, base_name)):
-            print(f"generating {base_name}")
-            
-            input_file = os.path.join(input_path, file_name)
-            # output_file = os.path.join(output_path, output_name)
-            
-            
-            
-            raster_name = date + ".nc"
-            
-            total_file_count += 1
-            
-            
-            
-            raster_path = os.path.join(raster_folder, raster_name)
-            
-            if area_of_interest == "beauharnois_canal":
-                shapefile_name = base_name + "_Polygon.shp"
-                shapefile_path =  os.path.join(shapefile_folder, shapefile_name)
-                print(shapefile_path)
-                # Check if the shapefile exists
-                if not os.path.exists(shapefile_path):
-                    print(f"Shapefile {shapefile_name} not found. Skipping.")
-                    count += 1
-                    continue
-                graph_data = generateNodeEdge(input_file, shapefile_path, raster_path, base_name)
-                input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/20170107.jpg"
-            else:
-                base_name = file_name.split("_", 1)[0]
-                if label_new:
-                    shapefile_name = "ice_new_" + base_name + ".shp"
-                else:
+                date = file_name.split("_", 1)[-1]
+                base_name, extension = os.path.splitext(file_name)
+                date = re.search(r'\d{8}', base_name)
+                date = date.group(0)
+                # if not os.path.exists(os.path.join(graphs_folder, base_name)):
+                print(f"generating {base_name}")
+                
+                input_file = os.path.join(input_path, file_name)
+                # output_file = os.path.join(output_path, output_name)
+                
+                
+                
+                raster_name = date + ".nc"
+                
+                total_file_count += 1
+                
+                
+                
+                raster_path = os.path.join(raster_folder, raster_name)
+                
+                if area_of_interest == "beauharnois_canal":
                     shapefile_name = base_name + "_Polygon.shp"
-                
-                shapefile_path =  os.path.join(ice_shapefile_folder, shapefile_name)
-                # Check if the shapefile exists
-                if not os.path.exists(shapefile_path):
-                    print(f"Shapefile {shapefile_name} not found. Skipping.")
-                    count += 1
-                    continue
-                graph_data = generateNodeEdge(input_file, raster_path, base_name)
-                input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/0jpg_sar_image/20170112_Band1.jpg"
-            
-            
-            
-            
-            save_graph(graph_data, graphs_folder, base_name)
-            
-            plt.close() 
-            
-            # Get node positions
-            # pos = nx.get_node_attributes(G, 'pos')
-            
-            if not os.path.exists(input_file):
-                print(f"Error: File does not exist - {input_file}")
-            else:
-                print("image exist")
-            # Attempt to read the image
-            image = cv2.imread(input_file)
-            if image is None:
-                print(f"Failed to load image at {input_file}. Please check the file format and integrity.")
-            else:
-                print(f"image is not none")
-            # image = load_image(input_file)
-            
-            if draw_features:
-                print(f"start draw features")
-                draw_single_features_map(graph_data, image, feature_map_folder, base_name)
-                print(f"feature of date{base_name} is drawn")
-            
-            if draw_ground_truth:
-                labels = nx.get_node_attributes(graph_data, 'label')
-                mask = nx.get_node_attributes(graph_data, 'mask')
-                # print(f"label = {labels}")
-                node_colors = []
-                for name, label in labels.items():
-                    # print(f"label is {label}")
-                    if label == 1:
-                        node_colors.append('red')
-                    elif mask[name] == 0:
-                        
-                        node_colors.append('grey')
+                    shapefile_path =  os.path.join(shapefile_folder, shapefile_name)
+                    print(shapefile_path)
+                    # Check if the shapefile exists
+                    if not os.path.exists(shapefile_path):
+                        print(f"Shapefile {shapefile_name} not found. Skipping.")
+                        count += 1
+                        continue
+                    graph_data = generateNodeEdge(input_file, shapefile_path, raster_path, base_name)
+                    input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/20170107.jpg"
+                else:
+                    base_name = file_name.split("_", 1)[0]
+                    if label_new:
+                        shapefile_name = "ice_new_" + base_name + ".shp"
                     else:
-                        node_colors.append('blue')
+                        shapefile_name = base_name + "_Polygon.shp"
                     
-                # node_colors = ['blue' if label == 'water' else 'red' for label in labels]
-
-                ori_pos = nx.get_node_attributes(graph_data, 'pos')
-
-                # Flip y-coordinates to correct orientation
-                pos = {node: (x, image.shape[0] - y) for node, (x, y) in ori_pos.items()}
+                    shapefile_path =  os.path.join(ice_shapefile_folder, shapefile_name)
+                    # Check if the shapefile exists
+                    if not os.path.exists(shapefile_path):
+                        print(f"Shapefile {shapefile_name} not found. Skipping.")
+                        count += 1
+                        continue
+                    graph_data = generateNodeEdge(input_file, raster_path, base_name)
+                    input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/0jpg_sar_image/20170112_Band1.jpg"
                 
-                # Plot the graph
-                plt.figure(figsize=(image.shape[1] / 100, image.shape[0] / 100))
-                nx.draw(graph_data, pos, with_labels=False, node_color=node_colors, node_size=2)
-                plt.savefig(f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/new_label/ground_truth/{date}')
-                # plt.savefig(f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/denser/5GroundTruthImage/{date}')
-                print(f"image {date} saved ---------------------------------------------------")
-                plt.close()  # Close the plot to prevent it from being displayed
-                print(f"ground truth of date{base_name} is drawn")
+                
+                
+                
+                save_graph(graph_data, graphs_folder, base_name)
+                
+                plt.close() 
+                
+                # Get node positions
+                # pos = nx.get_node_attributes(G, 'pos')
+                
+                if not os.path.exists(input_file):
+                    print(f"Error: File does not exist - {input_file}")
+                else:
+                    print("image exist")
+                # Attempt to read the image
+                image = cv2.imread(input_file)
+                if image is None:
+                    print(f"Failed to load image at {input_file}. Please check the file format and integrity.")
+                else:
+                    print(f"image is not none")
+                # image = load_image(input_file)
+                
+                if draw_features:
+                    print(f"start draw features")
+                    draw_single_features_map(graph_data, image, feature_map_folder, base_name)
+                    print(f"feature of date{base_name} is drawn")
+                
+                if draw_ground_truth:
+                    labels = nx.get_node_attributes(graph_data, 'label')
+                    mask = nx.get_node_attributes(graph_data, 'mask')
+                    # print(f"label = {labels}")
+                    node_colors = []
+                    for name, label in labels.items():
+                        # print(f"label is {label}")
+                        print(f"mask name = {mask[name]}")
+                        if mask[name] == 0:
+                            node_colors.append('gray')
+                            print("gray is drawn")
+                        elif label == 1:
+                            node_colors.append('yellow')
+                        # elif mask[name] == 0:
+                        #     node_colors.append('gray')
+                        #     print("gray is drawn")
+                        else:
+                            node_colors.append('blue')
+                        
+                    # node_colors = ['blue' if label == 'water' else 'red' for label in labels]
+
+                    ori_pos = nx.get_node_attributes(graph_data, 'pos')
+
+                    # Flip y-coordinates to correct orientation
+                    pos = {node: (x, image.shape[0] - y) for node, (x, y) in ori_pos.items()}
+                    
+                    # Plot the graph
+                    plt.figure(figsize=(image.shape[1] / 100, image.shape[0] / 100))
+                    nx.draw(graph_data, pos, with_labels=False, node_color=node_colors, node_size=2)
+                    plt.savefig(f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/new_label/ground_truth_int/{date}')
+                    print(f"image {date} saved ---------------------------------------------------")
+                    plt.close()  # Close the plot to prevent it from being displayed
+                    print(f"ground truth of date{base_name} is drawn")
+                    # break
+                    
+                    
+                    
+
+                
+                print(f"finish generate {file_name}")
                 # break
-                
-                
-                
-
-            
-            print(f"finish generate {file_name}")
-            # break
 
     print(f"number of not found shape file: {count}")
     print(f"number of total file: {total_file_count}")
     # Now all printed output will be written to the file
     print("Printed output will be saved to printed_output.txt")
+    # process_graph_folder(graphs_folder)
 
     # Restore the original stdout
     sys.stdout = original_stdout

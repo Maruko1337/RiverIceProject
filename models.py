@@ -5,6 +5,9 @@ from layers import GraphConvolution
 from torch_geometric.nn import global_max_pool
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN, LeakyReLU as LRU
 from torch.nn import Sequential as Seq, Dropout, Linear as Lin
+from torch.nn import TransformerEncoder, TransformerEncoderLayer
+from torch_geometric.nn import GATConv, BatchNorm
+
 
 import numpy as np
 import scipy.sparse as sp
@@ -74,6 +77,47 @@ def tv_norm(X, eps=1e-3):
     X = X / torch.sqrt(torch.sum(X ** 2, dim=1, keepdim=True) + eps)
     return X
 
+class TransGCN(nn.Module):
+    def __init__(self, nfeat, nhid, nclass, dropout, nNodes, nhead=4, nlayers=4):
+        super(TransGCN, self).__init__()
+        print(f"start initialize")
+        self.gc1 = GraphConvolution(nfeat, nhid)
+        self.gc2 = GraphConvolution(nhid, nhid)
+        self.gc3 = GraphConvolution(nhid, nhid)
+        self.gc4 = GraphConvolution(nhid, nclass)
+        # self.gc4 = GraphConvolution(nhid, 1)
+        
+        # Transformer Encoder
+        self.encoder_layer = TransformerEncoderLayer(d_model=nhid, nhead=nhead)
+        self.transformer_encoder = TransformerEncoder(self.encoder_layer, num_layers=nlayers)
+
+        self.dropout = dropout
+        stdv = 1e-2
+        stdvp = 1e-2
+        self.mlp = nn.Sequential(
+                nn.Linear(nhid, 128), nn.ReLU(), nn.Dropout(0.5),
+                nn.Linear(128, 64), nn.ReLU(), nn.Dropout(0.5),
+                nn.Linear(64, nclass))
+        
+    def forward(self, x, adj):
+        x = F.gelu(self.gc1(x, adj))
+        x = F.dropout(x, self.dropout, training=self.training)
+        x = self.gc2(x, adj)
+        x = F.gelu(x)
+        
+        # Flatten for transformer input
+        x = x.view(x.size(0), -1, x.size(1))
+        
+        # Apply Transformer Encoder
+        x = self.transformer_encoder(x)
+        
+        # Reshape back to original
+        x = x.view(x.size(0), -1)
+        
+        x = self.gc4(x, adj)
+        
+        return F.log_softmax(x, dim=1)
+
 
 class GCN(nn.Module):
     def __init__(self, nfeat, nhid, nclass, dropout, nNodes):
@@ -107,6 +151,8 @@ class GCN(nn.Module):
         # print(f"step 2: feature is {x}, adj is {adj}")
         x = F.dropout(x, self.dropout, training=self.training)
         # print(f"step 3: feature is {x}, adj is {adj}")
+        # x = self.gc2(x, adj)
+        # x = self.gc3(x, adj)
         x = self.gc4(x, adj)
         # print(f"step 4: feature is {x}, adj is {adj}")
         
@@ -114,7 +160,87 @@ class GCN(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
+class ResGCN(nn.Module):
+    def __init__(self, nfeat, nhid, nclass, dropout, nNodes=None):
+        super(ResGCN, self).__init__()
+        self.gc1 = GraphConvolution(nfeat, nhid)
+        self.gc2 = GraphConvolution(nhid, nhid)
+        self.gc3 = GraphConvolution(nhid, nhid)
+        self.gc4 = GraphConvolution(nhid, nhid)
+        self.gc5 = GraphConvolution(nhid, nclass)
+        self.bn1 = BatchNorm(nhid)
+        self.dropout = dropout
+        self.mlp = Seq(
+                MLP([nhid, 128]), Dropout(0.5), MLP([128, 64]), Dropout(0.5),
+                Lin(64, nclass))
 
+    def forward(self, x, adj):
+        
+    
+    
+        x1 = F.relu(self.bn1(self.gc1(x, adj)))
+        x1 = F.dropout(x1, self.dropout, training=self.training)
+        x2 = F.relu(self.bn1(self.gc2(x1, adj)))
+        x2 = F.dropout(x2, self.dropout, training=self.training)
+        
+        # x3 = F.relu(self.gc3(x2 + x1, adj))  # Residual connection
+        # x3 = F.dropout(x3, self.dropout, training=self.training)
+        # x4 = F.relu(self.gc4(x3 + x2, adj))  # Residual connection
+        # x4 = F.dropout(x4, self.dropout, training=self.training)
+        # x5 = self.gc5(x1 + x2, adj)  # Residual connection
+        
+        # Apply MLP at the end
+        x2 = self.mlp(x2)
+
+        return F.log_softmax(x2, dim=1)
+
+
+# Convert adjacency matrix to edge index
+def adj_to_edge_index(adj_matrix):
+    # Get the indices of the non-zero elements
+    edge_index = adj_matrix._indices()
+    return edge_index
+
+
+class GAT(nn.Module):
+    def __init__(self, nfeat, nhid, nclass, dropout, heads=1):
+        super(GAT, self).__init__()
+        self.gat1 = GATConv(nfeat, nhid, heads=heads, dropout=dropout)
+        self.gat2 = GATConv(nhid * heads, nhid, heads=heads, dropout=dropout)
+        self.gat3 = GATConv(nhid * heads, nhid, heads=heads, dropout=dropout)
+        self.gat4 = GATConv(nhid * heads, nhid, heads=heads, dropout=dropout)
+        self.gat5 = GATConv(nhid * heads, nclass, heads=1, concat=False, dropout=dropout)
+        
+        self.dropout = dropout
+        
+        # Define the MLP
+        self.mlp = nn.Sequential(
+            nn.Linear(nhid, 128),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(64, nclass)
+        )
+
+    def forward(self, x, adj):
+        edge_index = adj_to_edge_index(adj)
+        x = F.relu(self.gat1(x, edge_index))
+        x = F.dropout(x, self.dropout, training=self.training)
+        x = F.relu(self.gat2(x, edge_index))
+        x = F.dropout(x, self.dropout, training=self.training)
+        # x = F.relu(self.gat3(x, edge_index))
+        # x = F.dropout(x, self.dropout, training=self.training)
+        # x = F.relu(self.gat4(x, edge_index))
+        # x = F.dropout(x, self.dropout, training=self.training)
+        # x = self.gat5(x, edge_index)
+        
+        # Apply MLP at the end
+        x = self.mlp(x)
+        
+        return F.log_softmax(x, dim=1)
+    
 class lwGCN(nn.Module):
     def __init__(self, nfeat, nhid, nclass, dropout, nNodes):
         super(lwGCN, self).__init__()

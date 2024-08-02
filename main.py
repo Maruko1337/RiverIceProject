@@ -20,6 +20,9 @@ from utils import *
 from models import *
 from constants import *
 
+from torch_geometric.data import DataLoader
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
@@ -40,18 +43,28 @@ def setup_cuda(args):
         torch.cuda.manual_seed(args.seed)
     return args
 
-def objective(trial):
-    args = parse_arguments()
-    args = setup_cuda(args)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    for test_year in TEST_YEARS:
+for test_year in TEST_YEARS:
+    def objective(trial):
+        args = parse_arguments()
+        args = setup_cuda(args)
+        print(f"test years are {TEST_YEARS}")
+        
         print("Running experiment for year:", test_year)
 
         nNodes = 2131 if AOI == "lake" else 1181
 
         # Model and optimizer
-        model = GCN(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT, nNodes=nNodes)
+        if MODEL_NAME == "ResGCN":
+            model = ResGCN(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT)
+        elif MODEL_NAME == "GAT":
+            model = GAT(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT)
+        else:
+            model = GCN(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT, nNodes=nNodes)
         optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WD)
+        for param in model.parameters():
+            print(param.requires_grad)
         
         if args.cuda: 
             model.cuda()
@@ -67,6 +80,37 @@ def objective(trial):
                     print("Training on:", file_path)
                     if TO_MASK:
                         adj, features, labels, mask = load_data(file_path, mask = True)
+                        if AUGMENT:
+                            #-------------------
+                            data = convert_to_data_object(adj, features, labels, mask)
+                            data_list = [data]
+                            criterion = torch.nn.CrossEntropyLoss()
+
+                            train_loader = DataLoader(data_list, batch_size=1, shuffle=True)  # Adjust batch_size as needed
+                            for data in train_loader:
+                                data = data.to(device)
+                                
+                                # Apply augmentations
+                                data = add_gaussian_noise(data)
+                                data = feature_dropout(data)
+                                data = feature_scaling(data)
+                                
+                                optimizer.zero_grad()
+                                out = model(data.x, data.adj)
+                                loss = criterion(out[data.train_mask], data.y[data.train_mask])
+                                loss.backward()
+                                optimizer.step()
+                                
+                                train_acc = accuracy(out[data.train_mask], data.y[data.train_mask])
+                                train_f1 = f1_score(out[data.train_mask], data.y[data.train_mask])
+                                
+                                train_loss_list.append(loss.detach().cpu().item())
+                                
+                                train_acc_list.append(train_acc)
+                                train_f1_list.append(train_f1)
+                            continue
+                            #-----------------------------
+                        
                         mask_rate = sum(mask) / len(mask) * 100
                         # print(f"label rate = {mask_rate}")
                         mask = torch.tensor(mask, dtype=torch.bool)
@@ -81,6 +125,9 @@ def objective(trial):
                     # print(f"features is {features}")
                     
 
+                    # features = features.to(torch.float32).requires_grad_()
+                    # adj = adj.to(torch.float32).requires_grad_()
+                    
                     output = model(features, adj)
                     if TO_MASK:
                         masked_output = output[mask]
@@ -90,8 +137,27 @@ def objective(trial):
 
                         
                         weights = calculate_weights(masked_labels)
-                        train_loss = F.cross_entropy(masked_output, masked_labels, weight=weights)
+                        
+                        # ----------------------------------
+                        
+                        # lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+                        loss_BCE = nn.BCEWithLogitsLoss(pos_weight=weights)
+                        preds = masked_output   
+
+                        # Convert masked_labels to float
+                        preds = preds.float()
+                        
+                        one_hot_labels = torch.zeros(masked_labels.size(0), 2, device = 'cuda')  # Create a tensor of zeros
+                        one_hot_labels.scatter_(1, masked_labels.unsqueeze(1), 1)  # Ensure masked_labels is [1542, 1]
+                        
+                        one_hot_labels = one_hot_labels.float()
+                        
+                        train_loss = loss_BCE(preds, one_hot_labels)
+                        
+                        
+                        #-------------------------------------------
                         print(f"loss is {train_loss}")
+                        print(f"weights = {weights}")
                         # print(f"masked output is {masked_output}, masked labels is {masked_labels}, weights is {weights}, loss test is {loss_test}")
                         train_acc = accuracy(masked_output, masked_labels)
                         train_f1 = f1_score(masked_output, masked_labels)
@@ -104,31 +170,24 @@ def objective(trial):
 
                     if torch.isnan(train_loss):
                         print(f"date {file_name} need break---------------------------")
-                        print(f"label = {masked_labels}, output = {masked_output}")
-                        print(f"label size = {masked_labels.size()}, output size = {masked_output.size()}")
-                        print(f"mask size = ")
                         break
                     else:
                         print(f"date {file_name} ---------------------------")
-                        print(f"label = {masked_labels}, output = {masked_output}")
-                        print(f"label size = {masked_labels.size()}, output size = {masked_output.size()}")
-                        
-                    train_loss_list.append(train_loss.item())
+                    train_loss.backward()
+                    
+                    optimizer.step()
+                    
+                    
+                    
+                    train_loss_list.append(train_loss.detach().cpu().item())
                     train_acc_list.append(train_acc)
                     train_f1_list.append(train_f1)
                     
-                    # train_loss.backward()
-                    # optimizer.step()
-                    
-                    for i in output:
-                        for j in i:
-                            # print(f"nan j is {j}")
-                            if torch.isnan(j):
-                                need_break = True
                     if need_break:
                         print(f"date {file_name} need break---------------------------")
                         break
-                print(f"train loss list is {train_loss_list}")
+            
+            print(f"train loss list is {train_loss_list}")
             return np.mean(train_loss_list), np.mean(train_acc_list), np.mean(train_f1_list)
 
         def cross_validation(path, n_splits=4):
@@ -140,9 +199,10 @@ def objective(trial):
                 train_files = [os.listdir(path)[i] for i in train_idx]
                 val_files = [os.listdir(path)[i] for i in val_idx]
                 train_loss, train_acc, train_f1 = train_model(path, train_files)
-                train_loss_tensor = torch.tensor(train_loss, requires_grad=True) 
-                train_loss_tensor.backward()
-                optimizer.step()
+                
+                # train_loss_tensor = torch.tensor(train_loss, requires_grad=True) 
+                # train_loss_tensor.backward()
+                # optimizer.step()
                 
                 val_loss, val_acc, val_f1 = validate(path, val_files)
                 train_loss_list.append(train_loss)
@@ -179,7 +239,25 @@ def objective(trial):
                         labels = labels[mask]
                         
                     weights = calculate_weights(labels)
-                    val_loss = F.cross_entropy(output, labels, weight=weights)
+                    
+                    # val_loss = F.cross_entropy(output, labels, weight=weights)
+                    
+                    #---------------------
+                    # lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+                    loss_BCE = nn.BCEWithLogitsLoss(pos_weight=weights)
+                    preds = output   
+
+                    # Convert masked_labels to float
+                    preds = preds.float()
+                    
+                    one_hot_labels = torch.zeros(labels.size(0), 2, device = 'cuda')  # Create a tensor of zeros
+                    one_hot_labels.scatter_(1, labels.unsqueeze(1), 1)  # Ensure masked_labels is [1542, 1]
+                    
+                    one_hot_labels = one_hot_labels.float()
+                    
+                    val_loss = loss_BCE(preds, one_hot_labels)
+                    
+                    #------------------
                     val_acc = accuracy(output, labels)
                     val_f1 = f1_score(output, labels)
                     val_loss_list.append(val_loss.item())
@@ -214,7 +292,26 @@ def objective(trial):
                         masked_labels = labels[mask]
                         
                         weights = calculate_weights(masked_labels)
-                        loss_test = F.cross_entropy(masked_output, masked_labels, weight=weights)
+                        
+                        
+                        #---------------------
+                        # lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+                        loss_BCE = nn.BCEWithLogitsLoss(pos_weight=weights)
+                        preds = masked_output   
+
+                        # Convert masked_labels to float
+                        preds = preds.float()
+                        
+                        one_hot_labels = torch.zeros(masked_labels.size(0), 2, device = 'cuda')  # Create a tensor of zeros
+                        one_hot_labels.scatter_(1, masked_labels.unsqueeze(1), 1)  # Ensure masked_labels is [1542, 1]
+                        
+                        one_hot_labels = one_hot_labels.float()
+                        
+                        loss_test = loss_BCE(preds, one_hot_labels)
+                        
+                        #------------------
+                    
+                        # loss_test = F.cross_entropy(masked_output, masked_labels, weight=weights)
                         # print(f"masked output is {masked_output}, masked labels is {masked_labels}, weights is {weights}, loss test is {loss_test}")
                         acc_test = accuracy(masked_output, masked_labels)
                         f1_test = f1_score(masked_output, masked_labels)
@@ -266,7 +363,7 @@ def objective(trial):
             acc_test_list.append(acc_test)
             f1_test_list.append(f1_test)
             print(f"Epoch {epoch+1}: Test Loss={loss_test}, Test Accuracy={acc_test}, Test F1={f1_test}")
-
+            print(f"Epoch {epoch+1}: train Loss={mean_train_loss}, train Accuracy={mean_train_acc}, train F1={mean_train_f1}")
         # Plotting results
         total_epochs = range(1, len(loss_train_list) + 1)
         plt.figure(figsize=(18, 6))
@@ -302,7 +399,7 @@ def objective(trial):
 
         return mean_val_loss
 
-    return objective
+    
 
 
 # Save the current stdout
@@ -327,8 +424,8 @@ def objective(trial):
 #     # Restore the original stdout
 #     sys.stdout = original_stdout
 
-if __name__ == "__main__":
-    study = optuna.create_study(direction='minimize')
-    study.optimize(objective, n_trials=100)
-    print(f"Best trial: {study.best_trial.value}")
-    print(f"Best parameters: {study.best_trial.params}")
+    if __name__ == "__main__":
+        study = optuna.create_study(direction='minimize')
+        study.optimize(objective, n_trials=1)
+        print(f"Best trial: {study.best_trial.value}")
+        print(f"Best parameters: {study.best_trial.params}")

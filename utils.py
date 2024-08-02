@@ -10,6 +10,8 @@ import cv2
 from imblearn.over_sampling import SMOTE  # Import SMOTE for oversampling
 from scipy.spatial.distance import cdist, euclidean
 import matplotlib.pyplot as plt
+from torch_geometric.data import Data
+from scipy.sparse import coo_matrix
 
 import sklearn.metrics as sk_metrics
 
@@ -542,6 +544,37 @@ def resample_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/da
     
     return adj_resampled, features_resampled, labels_resampled, idx_train, idx_val, idx_test
 
+def convert_to_data_object(adj, features, labels, mask):
+    # Ensure adj is a COO matrix
+    ori_adj = adj
+    if isinstance(adj, coo_matrix):
+        adj = torch.tensor(np.array(adj), dtype=torch.float32)
+    
+    # Convert sparse adjacency matrix to edge index
+    adj = adj.coalesce()  # Ensure it's in COO format
+    edge_index = torch.stack([adj._indices()[0], adj._indices()[1]], dim=0)
+    
+    x = torch.tensor(features, dtype=torch.float)
+    y = torch.tensor(labels, dtype=torch.long)
+    mask = torch.tensor(mask, dtype=torch.bool)
+    
+    return Data(x=x, edge_index=edge_index, adj=adj, y=y, train_mask=mask)
+
+def add_gaussian_noise(data, mean=0.0, std=0.01):
+    noise = torch.randn_like(data.x) * std + mean
+    noise = noise.to(data.x.device)  # Ensure noise is on the same device as data.x
+    data.x += noise
+    return data
+
+def feature_dropout(data, drop_prob=0.2):
+    mask = torch.rand(data.x.size(), device=data.x.device) > drop_prob  # Ensure mask is on the same device as data.x
+    data.x = data.x * mask.float()
+    return data
+
+def feature_scaling(data, scale_min=0.9, scale_max=1.1):
+    scale = (scale_max - scale_min) * torch.rand(data.x.size(), device=data.x.device) + scale_min  # Ensure scale is on the same device as data.x
+    data.x = data.x * scale
+    return data
 
 def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4Graphs/20190109", k = 3, mask = True, resample = False, draw = False, dataset="beauhornoise", temp = False):
     """Load citation network dataset"""
@@ -566,7 +599,7 @@ def load_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4
             # attributes['pos'][0],  # X-coordinate
             # attributes['pos'][1],  # Y-coordinate
             attributes['intensity'],
-            # attributes['incidence_angle']
+            # attributes['incidence_angle'],
             # attributes['label'],
             # attributes['temperature'],
             # attributes['humidity'],

@@ -5,10 +5,10 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1   # Request 1 GPU
-#SBATCH --time=3:00:00  # Request 1 hour of compute time
+#SBATCH --time=10:00:00  # Request 1 hour of compute time
 #SBATCH --mem=4GB  # Request 4GB of memory
 
-# salloc --time=2:0:0 --gres=gpu:1 --mem=4GB --ntasks=1 --account=def-ka3scott
+# salloc --time=5:0:0 --gres=gpu:1 --mem=4GB --ntasks=1 --account=def-ka3scott
 
 source ~/scratch/virenv/bin/activate
 module load opencv python scipy-stack StdEnv/2023  gcc/12.3  gdal libspatialindex
