@@ -28,7 +28,7 @@ def parse_arguments():
     parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
     parser.add_argument('--fastmode', action='store_true', default=False, help='Validate during training pass.')
     parser.add_argument('--seed', type=int, default=42, help='Random seed.')
-    parser.add_argument('--epochs', type=int, default=10, help='Number of epochs to train.')
+    parser.add_argument('--epochs', type=int, default=50, help='Number of epochs to train.')
     parser.add_argument('--LR', type=float, default=0.01, help='Initial learning rate.')
     parser.add_argument('--WD', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')
     parser.add_argument('--HIDDEN_SIZE', type=int, default=2, help='Number of HIDDEN_SIZE units.')
@@ -325,8 +325,8 @@ for test_year in TEST_YEARS:
                     acc_list.append(acc_test)
                     f1_list.append(f1_test)
                     if last:
-                        visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME)
-                        
+                        visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME, final = False)
+                        visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME, final = True)
             
 
             

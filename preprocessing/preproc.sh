@@ -1,5 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name="seaice"
+#SBATCH --mail-user=quyf0516@outlook.com 
 #SBATCH --account=def-ka3scott
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1

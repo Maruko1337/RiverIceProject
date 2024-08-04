@@ -3,6 +3,7 @@ import numpy as np
 import networkx as nx
 import os     
 import matplotlib.pyplot as plt
+import statistics
 import sys
 import time
 import re
@@ -238,7 +239,7 @@ def get_ice_water_label(date, raster, intensity_values, std_values):
         
         geom = shape(shaperec.shape.__geo_interface__)
         transformed_geom = transform_polygon(geom, geotransform)
-        print(f"polygon: {transformed_geom}")
+        # print(f"polygon: {transformed_geom}")
         ice_label_list.append(transformed_geom)
     
     for shaperec in water_shapefile.shapeRecords():
@@ -352,12 +353,12 @@ def get_local_feature(date):
                             else:
                                 print("Error: filtered df is empty")
                                 return None
-                        else:
-                            print(f"{date_mon_str} does not startswith({date_mon[:6]}):")
-                else:
-                    print(f"length of filename {filename} is less than 6")
-            else:
-                print(f"filename {filename} is not matched with pattern")
+                        # else:
+                            # print(f"{date_mon_str} does not startswith({date_mon[:6]}):")
+                # else:
+                #     print(f"length of filename {filename} is less than 6")
+            # else:
+            #     print(f"filename {filename} is not matched with pattern")
                             
                     
                     
@@ -457,8 +458,22 @@ def get_intensities(image, date, num_superpixels, segments):
     intensity_values = [0 if intensity > 0.35 else intensity for intensity in intensity_values]
 
     intensity_values = (intensity_values - np.min(intensity_values)) / (np.max(intensity_values) - np.min(intensity_values))
-    intensity_values = [intensity/5 if intensity < 0.15 else intensity for intensity in intensity_values]
+    
 
+    # intensity_values = [intensity/4 if intensity < 0.4 else intensity for intensity in intensity_values]
+    mean_int = statistics.mean(intensity_values)
+    print(f"mean intensity = {mean_int}")
+    if mean_int > 0.06:
+        print(f"mean_int / 0.2= {mean_int / 0.2}")
+        intensity_values =  intensity_values / (mean_int / 0.03)
+    elif mean_int < 0.03:
+        print(f"mean_int < 0.02, ")
+        intensity_values =  intensity_values * (0.03 / mean_int)
+    # elif mean_int < 0.08:
+    #     intensity_values =  intensity_values * 1.07
+    #     intensity_values = [1 if intensity >1 else intensity for intensity in intensity_values]
+
+        
     std_values = (std_values - np.min(std_values)) / (np.max(std_values) - np.min(std_values))
     
     std_values = [0 if std > 0.9 else std for std in std_values]
@@ -558,7 +573,7 @@ def create_superpixel_graph(image, date, raster_path):
         
         intensity_threshold = 0.1
         # ice == 1, water == 0
-        print(f"intensity < threshold:{intensity_threshold} = {intensity}-----------------------------------")
+        # print(f"intensity < threshold:{intensity_threshold} = {intensity}-----------------------------------")
         if intensity > intensity_threshold:
             if include_point(center, ice_list):
                 ice_water_label = 1
@@ -740,10 +755,11 @@ with open(output_file_path, "w") as f:
     for file_name in os.listdir(input_path):
         f.flush()
         # if file_name.endswith("jpg"):
-        modify_list = ["20210328","20210208","20200309", "20200214"]
-        modify_list2 = ["20210316"]
-        for date in modify_list2:
-            if file_name.startswith(date):
+        modify_list = ["20170313"]
+        modify_list2 = ["20210316", "20210220", "20210127", "20210115", "20210103", "20200321", "20200309", "20200226", "20200202", "20200109", "20190327"]
+        for date in modify_list:
+            if not file_name.startswith(date):
+                print(f"start generating date {file_name}!!!!!!!!!!!!")
 
                 date = file_name.split("_", 1)[-1]
                 base_name, extension = os.path.splitext(file_name)
@@ -826,10 +842,10 @@ with open(output_file_path, "w") as f:
                     node_colors = []
                     for name, label in labels.items():
                         # print(f"label is {label}")
-                        print(f"mask name = {mask[name]}")
+                        # print(f"mask name = {mask[name]}")
                         if mask[name] == 0:
                             node_colors.append('gray')
-                            print("gray is drawn")
+                            # print("gray is drawn")
                         elif label == 1:
                             node_colors.append('yellow')
                         # elif mask[name] == 0:

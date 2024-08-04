@@ -1,0 +1,24 @@
+Fri Aug  2 15:52:21 2024       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.54.15              Driver Version: 550.54.15      CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Tesla P100-PCIE-12GB           On  |   00000000:03:00.0 Off |                    0 |
+| N/A   30C    P0             25W /  250W |       0MiB /  12288MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+[I 2024-08-02 15:53:40,379] A new study created in memory with name: no-name-f035e0ab-3a9f-47fd-9906-744d56f190f8
+[I 2024-08-02 16:33:10,773] Trial 0 finished with value: 0.33491103975102304 and parameters: {}. Best is trial 0 with value: 0.33491103975102304.
+[I 2024-08-02 16:33:10,806] A new study created in memory with name: no-name-0d5c3dbb-7f48-4f39-9cb6-32e4295179d1
+slurmstepd: error: *** JOB 38618651 ON cdr255 CANCELLED AT 2024-08-02T16:49:35 ***

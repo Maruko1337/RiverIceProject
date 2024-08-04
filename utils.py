@@ -836,7 +836,7 @@ def f1_score(output, target):
     
     
     
-def visualize(date, adj, features, output, labels = None, area_of_interest = "lake", model_name = "lwGCN"):
+def visualize(date, adj, features, output, labels = None, area_of_interest = "lake", model_name = "lwGCN", final = False):
     # Move tensors from GPU to CPU
     adj = adj.cpu()
     features = features.cpu()
@@ -891,10 +891,11 @@ def visualize(date, adj, features, output, labels = None, area_of_interest = "la
     if labels is not None: 
         for i, node in enumerate(node_colors):
             if labels[i] != bi_labels[i]:
-                if labels[i] == 1:
-                    node_colors[i] = 'green'
-                else:
-                    node_colors[i] = 'red'
+                if not final:
+                    if labels[i] == 1:
+                        node_colors[i] = 'green'
+                    else:
+                        node_colors[i] = 'red'
             else:
                 correct += 1 
 
@@ -914,7 +915,10 @@ def visualize(date, adj, features, output, labels = None, area_of_interest = "la
     nx.draw(G, pos, with_labels=False, node_color=node_colors, node_size=2)
     # Save the plot as a PNG image
     if area_of_interest == "lake":
-        save_path = '/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/outPygcn/lake_relabel/new_' + date + '.png'
+        if not final:
+            save_path = '/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/outPygcn/lake_relabel/new_' + date + '.png'
+        else:
+            save_path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/RiverIceProj/output_figures/visualized_result/" + date + ".png"
     else:
         save_path = f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/outPygcn/{model_name}_{date}.png'
     plt.savefig(save_path)

@@ -1,4 +1,4 @@
-MODEL_NAME = "ResGCN"
+MODEL_NAME = "GCN"
 AOI = "lake" # area of interest
 # TEST_YEARS = ["2021","2018", "2019", "2020", "2017"]
 TEST_YEARS = ["2017"]
