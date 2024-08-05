@@ -454,24 +454,22 @@ def get_intensities(image, date, num_superpixels, segments):
     intensity_values = (intensity_values - np.min(intensity_values)) / (np.max(intensity_values) - np.min(intensity_values))
     
     # remove the outliers
-    # the value 0.85 is based on experiment
+    # the value 0.35 is based on experiment
     intensity_values = [0 if intensity > 0.35 else intensity for intensity in intensity_values]
 
     intensity_values = (intensity_values - np.min(intensity_values)) / (np.max(intensity_values) - np.min(intensity_values))
     
 
-    # intensity_values = [intensity/4 if intensity < 0.4 else intensity for intensity in intensity_values]
     mean_int = statistics.mean(intensity_values)
     print(f"mean intensity = {mean_int}")
+    
+    # Normalize the intensity to avoid unbalanced classes
     if mean_int > 0.06:
         print(f"mean_int / 0.2= {mean_int / 0.2}")
         intensity_values =  intensity_values / (mean_int / 0.03)
     elif mean_int < 0.03:
         print(f"mean_int < 0.02, ")
         intensity_values =  intensity_values * (0.03 / mean_int)
-    # elif mean_int < 0.08:
-    #     intensity_values =  intensity_values * 1.07
-    #     intensity_values = [1 if intensity >1 else intensity for intensity in intensity_values]
 
         
     std_values = (std_values - np.min(std_values)) / (np.max(std_values) - np.min(std_values))
@@ -662,10 +660,7 @@ def generateNodeEdge(input_file, raster_path, date):
     if area_of_interest == "lake":
         output_path1 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/1SuperpixelSeg/" + date + ".jpg"
     else:
-        # output_path1 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/1SuperpixelSeg/" + date + ".jpg"
         output_path1 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/densePreproc/1SuperpixelSeg/" + date + ".jpg"
-        # output_path1 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/denser/1SuperpixelSeg/" + date + ".jpg"
-
     print(f"start draw")
     # Draw superpixel contours
     contours = cv2.findContours(segments.getLabelContourMask(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]

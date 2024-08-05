@@ -60,8 +60,10 @@ for test_year in TEST_YEARS:
             model = ResGCN(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT)
         elif MODEL_NAME == "GAT":
             model = GAT(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT)
+        elif MODEL_NAME == "lwGCN":
+            model = lwGCN(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT, nNodes=nNodes)
         else:
-            model = GCN(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT, nNodes=nNodes)
+            model = GCN(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT)
         optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WD)
         for param in model.parameters():
             print(param.requires_grad)
@@ -155,7 +157,6 @@ for test_year in TEST_YEARS:
                         train_loss = loss_BCE(preds, one_hot_labels)
                         
                         
-                        #-------------------------------------------
                         print(f"loss is {train_loss}")
                         print(f"weights = {weights}")
                         # print(f"masked output is {masked_output}, masked labels is {masked_labels}, weights is {weights}, loss test is {loss_test}")
@@ -199,10 +200,7 @@ for test_year in TEST_YEARS:
                 train_files = [os.listdir(path)[i] for i in train_idx]
                 val_files = [os.listdir(path)[i] for i in val_idx]
                 train_loss, train_acc, train_f1 = train_model(path, train_files)
-                
-                # train_loss_tensor = torch.tensor(train_loss, requires_grad=True) 
-                # train_loss_tensor.backward()
-                # optimizer.step()
+            
                 
                 val_loss, val_acc, val_f1 = validate(path, val_files)
                 train_loss_list.append(train_loss)
@@ -232,7 +230,6 @@ for test_year in TEST_YEARS:
                         adj, features, labels = load_data(file_path, mask=False)
                     if args.cuda:
                         features, adj, labels = features.cuda(), adj.cuda(), labels.cuda()
-                    # optimizer.zero_grad()
                     output = model(features, adj)
                     if TO_MASK:
                         output = output[mask]
@@ -242,8 +239,6 @@ for test_year in TEST_YEARS:
                     
                     # val_loss = F.cross_entropy(output, labels, weight=weights)
                     
-                    #---------------------
-                    # lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
                     loss_BCE = nn.BCEWithLogitsLoss(pos_weight=weights)
                     preds = output   
 
@@ -251,13 +246,12 @@ for test_year in TEST_YEARS:
                     preds = preds.float()
                     
                     one_hot_labels = torch.zeros(labels.size(0), 2, device = 'cuda')  # Create a tensor of zeros
-                    one_hot_labels.scatter_(1, labels.unsqueeze(1), 1)  # Ensure masked_labels is [1542, 1]
+                    one_hot_labels.scatter_(1, labels.unsqueeze(1), 1)  # Ensure masked_labels is [n, 1]
                     
                     one_hot_labels = one_hot_labels.float()
                     
                     val_loss = loss_BCE(preds, one_hot_labels)
                     
-                    #------------------
                     val_acc = accuracy(output, labels)
                     val_f1 = f1_score(output, labels)
                     val_loss_list.append(val_loss.item())
@@ -283,7 +277,6 @@ for test_year in TEST_YEARS:
                         adj, features, labels = load_data(file_path, mask=False)
                     if args.cuda:
                         features, adj, labels = features.cuda(), adj.cuda(), labels.cuda()
-                    # optimizer.zero_grad()
                     output = model(features, adj)
                     # print(f"output is {output}, features is {features}, adj is {adj}")
                     
@@ -294,8 +287,6 @@ for test_year in TEST_YEARS:
                         weights = calculate_weights(masked_labels)
                         
                         
-                        #---------------------
-                        # lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
                         loss_BCE = nn.BCEWithLogitsLoss(pos_weight=weights)
                         preds = masked_output   
 
@@ -309,7 +300,6 @@ for test_year in TEST_YEARS:
                         
                         loss_test = loss_BCE(preds, one_hot_labels)
                         
-                        #------------------
                     
                         # loss_test = F.cross_entropy(masked_output, masked_labels, weight=weights)
                         # print(f"masked output is {masked_output}, masked labels is {masked_labels}, weights is {weights}, loss test is {loss_test}")
@@ -324,21 +314,16 @@ for test_year in TEST_YEARS:
                     loss_list.append(loss_test)
                     acc_list.append(acc_test)
                     f1_list.append(f1_test)
-                    if last:
-                        visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME, final = False)
-                        visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME, final = True)
+                    # if last:
+                    #     visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME, final = False)
+                    #     visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME, final = True)
             
 
             
-            # Assuming acc_list, loss_list, f1_list are lists of PyTorch tensors
-            # acc_list_cpu = [acc_item.cpu().item() for acc_item in acc_list]
-            # loss_list_cpu = [loss_item.cpu().item() for loss_item in loss_list]
-            # f1_list_cpu = [f1_item.cpu().item() for f1_item in f1_list]
             loss_list = [loss.detach().cpu().numpy() for loss in loss_list]
-            # return np.mean(loss_list_cpu), np.mean(acc_list_cpu), np.mean(f1_list_cpu)
             return np.mean(loss_list), np.mean(acc_list), np.mean(f1_list)
         if AOI == "lake":
-            path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/new_label/graphs"
+            path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/RiverIceProj/st_lawrence_data/graphs"
         else:
             path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/7relabel_graphs"
         
@@ -424,6 +409,7 @@ for test_year in TEST_YEARS:
 #     # Restore the original stdout
 #     sys.stdout = original_stdout
 
+# Not saving the stdout
     if __name__ == "__main__":
         study = optuna.create_study(direction='minimize')
         study.optimize(objective, n_trials=1)

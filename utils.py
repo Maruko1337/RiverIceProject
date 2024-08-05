@@ -845,11 +845,8 @@ def visualize(date, adj, features, output, labels = None, area_of_interest = "la
     
     output = output.cpu()
     
-    # adj = adj.numpy()
-    # features = features.numpy()
-    # labels = labels.numpy()
     if area_of_interest == "lake":
-        path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/6Graph_label_intensity/" + date
+        path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/RiverIceProj/st_lawrence_data/graphs/" + date
     else:
         path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/7relabel_graphs/" + date
     with open(path, 'rb') as f:
@@ -956,53 +953,53 @@ def update_plots(epoch, train_losses, train_acc, test_losses, test_acc):
     plt.close()
       
 
-# Save the current stdout
-original_stdout = sys.stdout
+# # Save the current stdout
+# original_stdout = sys.stdout
 
-# Specify the file path where you want to save the printed output
-output_file_path = "20170217GraphInfo.txt"
+# # Specify the file path where you want to save the printed output
+# output_file_path = "20170217GraphInfo.txt"
 
-# Open the file in write mode
-with open(output_file_path, "w") as f:
-    # Redirect stdout to the file
-    sys.stdout = f
+# # Open the file in write mode
+# with open(output_file_path, "w") as f:
+#     # Redirect stdout to the file
+#     sys.stdout = f
     
-    Cadj, Cfeatures, Clabels, Cidx_train, Cidx_val, Cidx_test = Cora_load_data()
-    path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4Graphs/"
-    test_year = "2020"
-    for file_name in os.listdir(path):
-        if file_name.startswith(test_year):
-            print(f"date: {file_name}")
-            graph_path = path + file_name
-            adj, features, labels, idx_train, idx_val, idx_test = resample_data(path=graph_path, draw=True)
+#     Cadj, Cfeatures, Clabels, Cidx_train, Cidx_val, Cidx_test = Cora_load_data()
+#     path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/4Graphs/"
+#     test_year = "2020"
+#     for file_name in os.listdir(path):
+#         if file_name.startswith(test_year):
+#             print(f"date: {file_name}")
+#             graph_path = path + file_name
+#             adj, features, labels, idx_train, idx_val, idx_test = resample_data(path=graph_path, draw=True)
             
-    # path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/6ResampledGraph/"
-    # test_year = "2020"
-    # for file_name in os.listdir(path):
-    #     if not file_name.startswith(test_year):
-    #         print(f"date: {file_name}")
-    #         graph_path = path + file_name
-    #         adj, features, labels, idx_train, idx_val, idx_test = load_data(path=graph_path, draw=True)
+#     # path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/6ResampledGraph/"
+#     # test_year = "2020"
+#     # for file_name in os.listdir(path):
+#     #     if not file_name.startswith(test_year):
+#     #         print(f"date: {file_name}")
+#     #         graph_path = path + file_name
+#     #         adj, features, labels, idx_train, idx_val, idx_test = load_data(path=graph_path, draw=True)
             
     
-    # adj, features, labels, idx_train, idx_val, idx_test = load_data(draw=True)
+#     # adj, features, labels, idx_train, idx_val, idx_test = load_data(draw=True)
     
-    def check_same_type(obj1, obj2):
-        return type(obj1) == type(obj2)
+#     def check_same_type(obj1, obj2):
+#         return type(obj1) == type(obj2)
 
-    print(check_same_type(Cadj, adj))  
-    print(check_same_type(Cfeatures, features))  
-    print(check_same_type(Clabels, labels))  
-    print(check_same_type(Cidx_train, idx_train))  
-    print(check_same_type(Cidx_val, idx_val))  
-    print(check_same_type(Cidx_test, idx_test))  
+#     print(check_same_type(Cadj, adj))  
+#     print(check_same_type(Cfeatures, features))  
+#     print(check_same_type(Clabels, labels))  
+#     print(check_same_type(Cidx_train, idx_train))  
+#     print(check_same_type(Cidx_val, idx_val))  
+#     print(check_same_type(Cidx_test, idx_test))  
 
 
 
     
-    # Now all printed output will be written to the file
-    print("Printed output will be saved to printed_output.txt")
+    # # Now all printed output will be written to the file
+    # print("Printed output will be saved to printed_output.txt")
 
-    # Restore the original stdout
-    sys.stdout = original_stdout
+    # # Restore the original stdout
+    # sys.stdout = original_stdout
 

@@ -78,7 +78,7 @@ def tv_norm(X, eps=1e-3):
     return X
 
 class TransGCN(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout, nNodes, nhead=4, nlayers=4):
+    def __init__(self, nfeat, nhid, nclass, dropout, nhead=4, nlayers=4):
         super(TransGCN, self).__init__()
         print(f"start initialize")
         self.gc1 = GraphConvolution(nfeat, nhid)
@@ -120,7 +120,7 @@ class TransGCN(nn.Module):
 
 
 class GCN(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout, nNodes):
+    def __init__(self, nfeat, nhid, nclass, dropout):
         super(GCN, self).__init__()
         print(f"start initialize")
         self.gc1 = GraphConvolution(nfeat, nhid)
@@ -128,14 +128,8 @@ class GCN(nn.Module):
         self.gc3 = GraphConvolution(nhid, nhid)
         self.gc4 = GraphConvolution(nhid, nclass)
         
-        # Define the learnable weight for nodes
-        # self.learnable_weight = nn.Parameter(torch.ones(nNodes, nhid) * 1e-2)
-
         self.dropout = dropout
-        stdv = 1e-2
-        stdvp = 1e-2
-        # self.KNclose = nn.Parameter(torch.randn(nhid, nNodes) * stdv) 
-        # self.convs1x1 = nn.Parameter(torch.randn(nhid, nhid, nhid) * stdv)
+        
         self.mlp = Seq(
                 MLP([2, 128]), Dropout(0.5), MLP([128, 64]), Dropout(0.5),
                 Lin(64, nclass))
@@ -161,7 +155,7 @@ class GCN(nn.Module):
 
 
 class ResGCN(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout, nNodes=None):
+    def __init__(self, nfeat, nhid, nclass, dropout):
         super(ResGCN, self).__init__()
         self.gc1 = GraphConvolution(nfeat, nhid)
         self.gc2 = GraphConvolution(nhid, nhid)
