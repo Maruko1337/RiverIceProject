@@ -1,5 +1,6 @@
 # RiverIceProject
 Winter/Spring 24 Coop Project
+
 Note that all files are in master branch.
 
 ## Training the Model
@@ -19,8 +20,10 @@ Start training the model by either:
 
 ## Script Details
 `pygcn.sh`: This script includes several packages required to run main.py. There may be additional dependencies not included in the script that you will need to install manually.
+
 `constants.py`: This file contains several parameters that can be adjusted as needed. (maybe it should be better named something other than constants.py as it holds adjustable parameters rather than constants.)
 
 ## Data
 The preprocessed data necessary for training the model is located in the data folder.
+
 Raw data for preprocessing is not included in the repository, as it is not required for training the model.
