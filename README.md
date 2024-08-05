@@ -1,5 +1,6 @@
 # RiverIceProject
 Winter/Spring 24 Coop Project
+Note that all files are in master branch.
 
 ## Training the Model
 
