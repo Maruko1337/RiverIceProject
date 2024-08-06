@@ -21,6 +21,26 @@ Start training the model by either:
 ## Script Details
 `pygcn.sh`: This script includes several packages required to run main.py. There may be additional dependencies not included in the script that you will need to install manually.
 
+The dependencies are the following:
+
+      source ~/scratch/virenv_new/bin/activate
+      module load opencv python scipy-stack StdEnv/2023  gcc/12.3  gdal libspatialindex
+      
+      pip install torch-scatter -f https://pytorch-geometric.com/whl/torch-1.9.0+cpu.html
+      pip install torch-sparse -f https://pytorch-geometric.com/whl/torch-1.9.0+cpu.html
+      pip install torch-cluster -f https://pytorch-geometric.com/whl/torch-1.9.0+cpu.html
+      pip install torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.9.0+cpu.html
+      pip install torch-geometric
+      
+      pip install requests
+      pip install --no-index optuna
+      pip install --no-index networkx
+      pip install --no-index geopandas
+        
+      
+      pip install --no-index shapely scikit_image scikit-learn imblearn
+
+
 `constants.py`: This file contains several parameters that can be adjusted as needed. (maybe it should be better named something other than constants.py as it holds adjustable parameters rather than constants.)
 
 ## Data
