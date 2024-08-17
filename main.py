@@ -314,8 +314,8 @@ for test_year in TEST_YEARS:
                     loss_list.append(loss_test)
                     acc_list.append(acc_test)
                     f1_list.append(f1_test)
-                    # if last:
-                    #     visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME, final = False)
+                    if last:
+                        visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME, final = False)
                     #     visualize(file_name, adj, features, output, labels, AOI, MODEL_NAME, final = True)
             
 

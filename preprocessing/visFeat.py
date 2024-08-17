@@ -93,7 +93,7 @@ def draw_single_features_map(graph, image, feature_map_folder, file_name):
     
     for nFeat, feature_name in enumerate(os.listdir(feature_map_folder)):
         print(f"generating feature:{feature_name}")
-        if feature_name == "intensity":
+        if feature_name == "intensity" or feature_name == "std":
             print(feature_name)
             
             print(f"graph:{file_name}")

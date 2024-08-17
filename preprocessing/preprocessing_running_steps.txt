@@ -1,0 +1,32 @@
+To run the preprocessing steps:
+
+
+1. Change the parameters as needed: a few parameter are in lines (34-37) in node_edge_generator.py
+    label_new is set to True because we are using new labels
+    draw_ground_truth is set to True to output ground truth images (saved in "your_path_to/RiverIceProj/st_lawrence_data/gruond_truth_int")
+    draw_features is set to True to output feature map (saved in "your_path_to/RiverIceProj/st_lawrence_data/feature_map")
+    area_of_interest is set to "lake" to generate the lake st lawrence region
+
+2. For lines (55-67) in node_edge_generator.py:
+    inc_angle_folder = "your_path_to/RiverIceProj/st_lawrence_data/inc_angle_folder/"
+    input_path = "your_path_to/RiverIceProj/st_lawrence_data/0jpg_sar_image/"
+    graphs_folder = "your_path_to/RiverIceProj/st_lawrence_data/graphs/"
+    seg_folder = "your_path_to/RiverIceProj/st_lawrence_data/segments"
+    raster_folder = "your_path_to/RiverIceProj/st_lawrence_data/raster/"
+    feature_map_folder = "your_path_to/RiverIceProj/st_lawrence_data/feature_map/"
+    if label_new:
+        ice_shapefile_folder = "your_path_to/RiverIceProj/st_lawrence_data/shapefiles/ice/"
+        water_shapefile_folder = "your_path_to/RiverIceProj/st_lawrence_data/shapefiles/water/"
+        local_feature_folder = "your_path_to/RiverIceProj/st_lawrence_data/local_feature/"
+    else: # the following can be ignored since we are no longer using the old labels
+        ice_shapefile_folder = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/shapefiles/areas_of_interest/lake_stlawrence/ice/"
+        water_shapefile_folder = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/shapefiles/areas_of_interest/lake_stlawrence/water/"
+
+
+3. 
+line (661): output_path1 = "your_path_to/RiverIceProj/st_lawrence_data/superpixel_segments/" + date + ".jpg"
+line (678): output_path2 = "your_path_to/RiverIceProj/st_lawrence_data/ConnetAdjSuperpixel/" + date + ".jpg"
+line (699): output_path3 = "your_path_to/RiverIceProj/st_lawrence_data/remove_land_node/" + date + ".jpg"
+line (804): input_file = "your_path_to/RiverIceProj/0jpg_sar_image/20170112_Band1.jpg"
+line (862)：plt.savefig(f'your_path_to/RiverIceProj/st_lawrence_data/ground_truth_int/{date}')
+
