@@ -38,7 +38,7 @@ area_of_interest = "lake"
 print(f"generating : {area_of_interest} region")
 
 if area_of_interest == "beauharnois_canal":
-
+    # HARD-CODED paths
     graphs_folder = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/7relabel_graphs/"
     raster_folder = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/data/beauharnois_canal/"
     data = {"Ice Coverage": [11111111], "Ice Count": [222222222222], "Total Node": [333333333]}    
@@ -52,6 +52,7 @@ if area_of_interest == "beauharnois_canal":
     water_shapefile_folder = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/shapefiles/areas_of_interest/lake_stlawrence/water/"
 
 else:
+    # HARD-CODED paths
     inc_angle_folder = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/incident_angle_sheets/norm_filter/"
     input_path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/0jpg_sar_image/"
     graphs_folder = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/new_label/graphs/"
@@ -116,8 +117,8 @@ def visualize_ice_water_label(point, shapefile_path):
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
     plt.title('Visualization of Shapefile Features and Point')
-    plt.savefig("/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/graphs/shapefile.jpg")
-    plt.close()
+    plt.savefig("/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/graphs/shapefile.jpg") # HARD-CODED path
+    plt.close() 
     print("generated shapefile")
     
 def get_inc_angle(date, x, y, raster):
@@ -392,8 +393,8 @@ def read_image(image_path):
 
 def get_intensities(image, date, num_superpixels, segments):
     if area_of_interest != "lake":
-        band4_path = f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/{date}_Band4.jpg'
-        band5_path = f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/{date}_Band5.jpg'
+        band4_path = f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/{date}_Band4.jpg' # HARD-CODED path
+        band5_path = f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/{date}_Band5.jpg' # HARD-CODED path
 
         
         band4_image = read_image(band4_path)
@@ -658,9 +659,9 @@ def generateNodeEdge(input_file, raster_path, date):
     # Visualize superpixel segmentation
     
     if area_of_interest == "lake":
-        output_path1 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/1SuperpixelSeg/" + date + ".jpg"
+        output_path1 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/1SuperpixelSeg/" + date + ".jpg" # HARD-CODED path
     else:
-        output_path1 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/densePreproc/1SuperpixelSeg/" + date + ".jpg"
+        output_path1 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/densePreproc/1SuperpixelSeg/" + date + ".jpg" # HARD-CODED path
     print(f"start draw")
     # Draw superpixel contours
     contours = cv2.findContours(segments.getLabelContourMask(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
@@ -675,10 +676,10 @@ def generateNodeEdge(input_file, raster_path, date):
     # Visualize graph with superpixels
     
     if area_of_interest == "lake":
-        output_path2 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/2ConnetAdjSuperpixel/" + date + ".jpg"
+        output_path2 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/2ConnetAdjSuperpixel/" + date + ".jpg" # HARD-CODED path
     else:
-        output_path2 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/densePreproc/2ConnetAdjSuperpixel/" + date + ".jpg"
-        # output_path2 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/denser/2ConnetAdjSuperpixel/" + date + ".jpg"
+        output_path2 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/densePreproc/2ConnetAdjSuperpixel/" + date + ".jpg" # HARD-CODED path
+        # output_path2 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/denser/2ConnetAdjSuperpixel/" + date + ".jpg" # HARD-CODED path
     
     plt.figure(figsize=(image.shape[1] / 100, image.shape[0] / 100))  # Set figure size based on image dimensions
     pos = nx.get_node_attributes(graph, 'pos')  # Get node positions
@@ -696,10 +697,10 @@ def generateNodeEdge(input_file, raster_path, date):
 
     # Visualize final graph without land nodes
     if area_of_interest == "lake":
-        output_path3 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/3RemoveLandNode/" + date + ".jpg"
+        output_path3 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/3RemoveLandNode/" + date + ".jpg" # HARD-CODED path
     else: 
-        output_path3 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/densePreproc/3RemoveLandNode/" + date + ".jpg"
-        # output_path3 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/denser/3RemoveLandNode/" + date + ".jpg"
+        output_path3 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/densePreproc/3RemoveLandNode/" + date + ".jpg" # HARD-CODED path
+        # output_path3 = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/denser/3RemoveLandNode/" + date + ".jpg" # HARD-CODED path
 
     # Draw the graph on a blank canvas
     blank_image = np.zeros_like(image)
@@ -786,7 +787,7 @@ with open(output_file_path, "w") as f:
                         count += 1
                         continue
                     graph_data = generateNodeEdge(input_file, shapefile_path, raster_path, base_name)
-                    input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/20170107.jpg"
+                    input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/20170107.jpg" # HARD-CODED path
                 else:
                     base_name = file_name.split("_", 1)[0]
                     if label_new:
@@ -801,7 +802,7 @@ with open(output_file_path, "w") as f:
                         count += 1
                         continue
                     graph_data = generateNodeEdge(input_file, raster_path, base_name)
-                    input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/0jpg_sar_image/20170112_Band1.jpg"
+                    input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/0jpg_sar_image/20170112_Band1.jpg" # HARD-CODED path
                 
                 
                 
@@ -859,7 +860,8 @@ with open(output_file_path, "w") as f:
                     # Plot the graph
                     plt.figure(figsize=(image.shape[1] / 100, image.shape[0] / 100))
                     nx.draw(graph_data, pos, with_labels=False, node_color=node_colors, node_size=2)
-                    plt.savefig(f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/new_label/ground_truth_int/{date}')
+                    plt.savefig(f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/new_label/ground_truth_int/{date}') # HARD-CODED path
+                    
                     print(f"image {date} saved ---------------------------------------------------")
                     plt.close()  # Close the plot to prevent it from being displayed
                     print(f"ground truth of date{base_name} is drawn")

@@ -88,7 +88,7 @@ graphs = read_graphs_from_folder(graphs_folder)
 
 
 def draw_single_features_map(graph, image, feature_map_folder, file_name):
-    input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/0jpg_sar_image/20170112_Band1.jpg"
+    input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/0jpg_sar_image/20170112_Band1.jpg" # HARD-CODED path
     image = cv2.imread(input_file)
     
     for nFeat, feature_name in enumerate(os.listdir(feature_map_folder)):

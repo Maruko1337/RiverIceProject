@@ -15,7 +15,7 @@ from scipy.sparse import coo_matrix
 
 import sklearn.metrics as sk_metrics
 
-input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/20170107.jpg"
+input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/20170107.jpg" # HARD-CODED path
 
 image = cv2.imread(input_file)
 
@@ -448,7 +448,7 @@ def resample_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/da
         
             nx.draw(G_combined, pos_resampled, with_labels=False, node_color=color_map, node_size=1, node_shape='.')
             # Save the plot as a PNG image
-            plt.savefig(f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/graphs/resampled.png')
+            plt.savefig(f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/graphs/resampled.png') # HARD-CODED path
             # print(f"resampled position = {pos_resampled}")
             plt.close()
             
@@ -456,7 +456,7 @@ def resample_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/da
             
             nx.draw(G, original_positions, with_labels=False, node_color=color_map[:old_nnodes], node_size=2)
             # Save the plot as a PNG image
-            plt.savefig(f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/graphs/original.png')
+            plt.savefig(f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/graphs/original.png') # HARD-CODED path
             # print(f"original position = {original_positions}")
             plt.close()
 
@@ -535,7 +535,7 @@ def resample_data(path="/home/maruko/projects/def-ka3scott/maruko/seaiceClass/da
         labels_resampled = torch.tensor(labels_resampled)
         
         filename = os.path.basename(path)
-        save_path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/6ResampledGraph/"
+        save_path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/6ResampledGraph/" # HARD-CODED path
         save_graph(G_combined, save_path, filename)
         # print(f"graph for {filename} is saved to {save_path}")
     ###############
@@ -846,9 +846,9 @@ def visualize(date, adj, features, output, labels = None, area_of_interest = "la
     output = output.cpu()
     
     if area_of_interest == "lake":
-        path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/RiverIceProj/st_lawrence_data/graphs/" + date
+        path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/RiverIceProj/st_lawrence_data/graphs/" + date # HARD-CODED path
     else:
-        path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/7relabel_graphs/" + date
+        path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/7relabel_graphs/" + date # HARD-CODED path
     with open(path, 'rb') as f:
         G_ori = pickle.load(f)
     
@@ -899,9 +899,10 @@ def visualize(date, adj, features, output, labels = None, area_of_interest = "la
     # Get node positions
     # pos = nx.get_node_attributes(G, 'pos')
     if area_of_interest == "lake":
-        input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/0jpg_sar_image/20170112_Band1.jpg"
+        input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/lake_stlawrence/0jpg_sar_image/20170112_Band1.jpg" # HARD-CODED path
     else:
-        input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/20170107.jpg"
+        input_file = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/sar_jpg/20170107.jpg" # HARD-CODED path
+        
 
     image = cv2.imread(input_file)
     # Flip y-coordinates to correct orientation
@@ -913,11 +914,11 @@ def visualize(date, adj, features, output, labels = None, area_of_interest = "la
     # Save the plot as a PNG image
     if area_of_interest == "lake":
         if not final:
-            save_path = '/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/outPygcn/lake_relabel/new_' + date + '.png'
+            save_path = '/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/outPygcn/lake_relabel/new_' + date + '.png' # HARD-CODED path
         else:
-            save_path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/RiverIceProj/output_figures/visualized_result/" + date + ".png"
+            save_path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/RiverIceProj/output_figures/visualized_result/" + date + ".png" # HARD-CODED path
     else:
-        save_path = f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/outPygcn/{model_name}_{date}.png'
+        save_path = f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/outPygcn/{model_name}_{date}.png' # HARD-CODED path
     plt.savefig(save_path)
     print(f"output of model {model_name} in {area_of_interest} region of image {date} saved to {save_path}---------------------------------------------------")
     plt.close()  # Close the plot to prevent it from being displayed
@@ -949,7 +950,7 @@ def update_plots(epoch, train_losses, train_acc, test_losses, test_acc):
     epoch_len = len(epoch)
     
     # Save the figure
-    plt.savefig(f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/graphs/pygcn/training_metrics_epoch_{epoch_len+1}.png')
+    plt.savefig(f'/home/maruko/projects/def-ka3scott/maruko/seaiceClass/output/graphs/pygcn/training_metrics_epoch_{epoch_len+1}.png') # HARD-CODED path
     plt.close()
       
 

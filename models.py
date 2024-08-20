@@ -118,7 +118,9 @@ class TransGCN(nn.Module):
         
         return F.log_softmax(x, dim=1)
 
-
+# The following GCN class implements a Graph Convolutional Network (GCN) as described in:
+# Kipf, T. N., & Welling, M. (2017). Semi-Supervised Classification with Graph Convolutional Networks.
+# https://arxiv.org/abs/1609.02907
 class GCN(nn.Module):
     def __init__(self, nfeat, nhid, nclass, dropout):
         super(GCN, self).__init__()

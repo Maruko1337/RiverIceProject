@@ -45,7 +45,7 @@ def setup_cuda(args):
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-for test_year in TEST_YEARS:
+for test_year in TEST_YEARS: # TEST_YEARS is hard-coded externally
     def objective(trial):
         args = parse_arguments()
         args = setup_cuda(args)
@@ -53,7 +53,7 @@ for test_year in TEST_YEARS:
         
         print("Running experiment for year:", test_year)
 
-        nNodes = 2131 if AOI == "lake" else 1181
+        nNodes = 2131 if AOI == "lake" else 1181 # HARD-CODED based on AOI
 
         # Model and optimizer
         if MODEL_NAME == "ResGCN":
@@ -64,7 +64,7 @@ for test_year in TEST_YEARS:
             model = lwGCN(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT, nNodes=nNodes)
         else:
             model = GCN(nfeat=N_FEATURES, nhid=HIDDEN_SIZE, nclass=N_CLASS, dropout=DROPOUT)
-        optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WD)
+        optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WD)  # LR and WD are hard-coded
         for param in model.parameters():
             print(param.requires_grad)
         
@@ -82,13 +82,13 @@ for test_year in TEST_YEARS:
                     print("Training on:", file_path)
                     if TO_MASK:
                         adj, features, labels, mask = load_data(file_path, mask = True)
-                        if AUGMENT:
+                        if AUGMENT: # HARD-CODED 
                             #-------------------
                             data = convert_to_data_object(adj, features, labels, mask)
                             data_list = [data]
                             criterion = torch.nn.CrossEntropyLoss()
 
-                            train_loader = DataLoader(data_list, batch_size=1, shuffle=True)  # Adjust batch_size as needed
+                            train_loader = DataLoader(data_list, batch_size=1, shuffle=True)  # HARD-CODED batch_size
                             for data in train_loader:
                                 data = data.to(device)
                                 
@@ -323,9 +323,9 @@ for test_year in TEST_YEARS:
             loss_list = [loss.detach().cpu().numpy() for loss in loss_list]
             return np.mean(loss_list), np.mean(acc_list), np.mean(f1_list)
         if AOI == "lake":
-            path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/RiverIceProj/st_lawrence_data/graphs"
+            path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/RiverIceProj/st_lawrence_data/graphs" # HARD-CODED path
         else:
-            path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/7relabel_graphs"
+            path = "/home/maruko/projects/def-ka3scott/maruko/seaiceClass/data/7relabel_graphs" # HARD-CODED path
         
         # Training process
         loss_train_list, acc_train_list, f1_train_list = [], [], []
