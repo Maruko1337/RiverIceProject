@@ -1,11 +1,41 @@
 1. 
     1.1 change the 'path' in 'main.py' (line 326) to the directory of 'your_directory_to/RiverIceProj/st_lawrence_data/graphs'
-        these are the preprocessed graphs.
-    1.2 change the 'path' in 'utils.py' (line 849) to the directory of 'your_directory_to/RiverIceProj/st_lawrence_data/graphs' + date
+        these are the preprocessed graphs. 
+        Added the comment 'Hard-Coded'.
+    1.2 change the 'path' in 'utils.py' (line 849) to the directory of 'your_directory_to/RiverIceProj/st_lawrence_data/graphs' + date 
+    Added the comment 'Hard-Coded'.
     1.3 change the 'input_file' in 'utils.py' (line 902) to the directory of 'your_directory_to/RiverIceProj/st_lawrence_data/0jpg_sar_image/20170112_Band1.jpg'
+    Added the comment 'Hard-Coded'.
     1.4 change the 'save_path' in 'utils.py' (line 916-919) to the directory of "your_directory_to/RiverIceProj/output_figures/visualized_result/" + date + ".png"
+    Added the comment 'Hard-Coded'.
     1.5 change the 'input_file' in 'utils.py' (line 18) to the directory of 'your_directory_to/RiverIceProj/st_lawrence_data/0jpg_sar_image/20170112_Band1.jpg'
+    Added the comment 'Hard-Coded'.
 2. The adjustable parameters are in 'constants.py'
+    all of them are 'Hard-Coded'
+    Which includes:
+    MODEL_NAME: this is the name of the model you want, you can choose from 
+        ResGCN (I created), 
+        GAT (Graph Attention network, also I created), 
+        lwGCN (learnable weights network, also I created), and 
+        GCN(graph convolution network, from kpfi's paper).
+    AOI: area of interest, you can choose from
+        lake: the lake st lawrence (graphs are ready to run)
+        beauharnois: the beauharnois canal, but we didn't relabel this one. (the graphs need to be preprocessed before running this region)
+    TEST_YEARS: the years that will be test on:
+        this is a list that includes the years that will be test on
+        If you want the result for all five years you should change TEST_YEARS = ["2021","2018", "2019", "2020", "2017"] so it will iterate through all the five years individually as the test years and set the remaining four years for training
+        the loop that iterates throught the TEST_YEARS is in line (48) in main.py 
+    TO_MASK: this is set to true if we are only training on the labeled nodes (the nodes that does not have a label will not be calculated in the loss)
+    HIDDEN_SIZE: you can change the HIDDEN_SIZE from (4 to 64) to test for the best result. I find using 4 is the best. 
+    AUGMENT: since we don't have much features, so I tried to augment the features, but it doesn't work so it is set to false. 
+
+    the following can be changed as needed, but the values here are the best values I tried (not necessarily the best values)
+    LR = 0.01 # learning rate
+    WD = 5e-4 # weight decay
+    DROPOUT = 0.5
+    N_FEATURES = 2
+    N_CLASS = 2
+
 3. run the main.py script
 4. the output will be saved in 'your_directory_to/RiverIceProj/output_figures'
     where the "20xx_results.png" is the output accuracy curve
